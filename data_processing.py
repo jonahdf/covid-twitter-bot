@@ -72,9 +72,11 @@ test_results = client.get("j8mb-icvb", limit=2000000)
 
 # Filter data to get columns of interest
 hhs_data = pd.DataFrame.from_records(results)[['state', 'date', 'inpatient_beds_used_covid']]
-hhs_data = hhs_data.astype({'inpatient_beds_used_covid': 'float32'})
+hhs_data.inpatient_beds_used_covid = hhs_data.inpatient_beds_used_covid.fillna(0)
+hhs_data = hhs_data.astype({'inpatient_beds_used_covid': 'int32'})
 test_data = pd.DataFrame.from_records(test_results)[['state', 'date', 'overall_outcome', 'new_results_reported']]
-test_data = test_data.astype({'new_results_reported': 'float32'})
+test_data.new_results_reported = test_data.new_results_reported.fillna(0)
+test_data = test_data.astype({'new_results_reported': 'int32'})
 
 # Make date columns in proper format
 hhs_data['date'] = hhs_data['date'].apply(lambda x: x[:10])
