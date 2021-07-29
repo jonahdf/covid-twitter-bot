@@ -67,8 +67,8 @@ states = {
 nyt_data_us = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/rolling-averages/us.csv")
 nyt_data_state = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/rolling-averages/us-states.csv")
 client = Socrata("healthdata.gov", None)
-results = client.get("g62h-syeh", limit=200000)
-test_results = client.get("j8mb-icvb", limit=200000)
+results = client.get("g62h-syeh", limit=2000000)
+test_results = client.get("j8mb-icvb", limit=2000000)
 
 # Filter data to get columns of interest
 hhs_data = pd.DataFrame.from_records(results)[['state', 'date', 'inpatient_beds_used_covid']]
@@ -88,16 +88,25 @@ nyt_data_state.date = pd.to_datetime(nyt_data_state.date)
 get_state_cases
 Creates dataframe of time series date and cases for given state
 inputs:
- state_code: 2-letter code of state
+ state_codes: List of 2-letter codes of states to query
  start_date (pd.Timestamp): starting date, defaults to 1-1-2020
  end_date (pd.Timestamp): ending date, defaults to today 
 returns:
  df with 'date' and 'test_positivity'
 """
-def get_state_cases(state_code, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
-    state_data = nyt_data_state[nyt_data_state.state == states[state_code]]
-    state_data = state_data[(state_data.date >= start_date) & (state_data.date <= end_date)]
-    return state_data[['date', 'cases']]
+def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+    curr_date = start_date
+    input_states = [states[s] for s in state_codes]
+    state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
+    max_date = state_data.date.max()
+    lst = []
+    while(curr_date < end_date and curr_date < max_date):
+        day_data = state_data[state_data.date == str(curr_date)]
+        case_sum = day_data.cases.sum()
+        newRow = {'date': curr_date, 'cases': case_sum}
+        lst.append(newRow)
+        curr_date += datetime.timedelta(1)
+    return pd.DataFrame(lst)
 
 def get_us_cases(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     us_data = nyt_data_us[(nyt_data_us.date >= start_date) & (nyt_data_us.date <= end_date)]
@@ -107,10 +116,19 @@ def get_us_cases(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.to
 get_state_deaths
 Same as above, deaths
 """
-def get_state_deaths(state_code, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
-    state_data = nyt_data_state[nyt_data_state.state == states[state_code]]
-    state_data = state_data[(state_data.date >= start_date) & (state_data.date <= end_date)]
-    return state_data[['date', 'deaths']]
+def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+    curr_date = start_date
+    input_states = [states[s] for s in state_codes]
+    state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
+    max_date = state_data.date.max()
+    lst = []
+    while(curr_date < end_date and curr_date < max_date):
+        day_data = state_data[state_data.date == str(curr_date)]
+        case_sum = day_data.cases.sum()
+        newRow = {'date': curr_date, 'deaths': case_sum}
+        lst.append(newRow)
+        curr_date += datetime.timedelta(1)
+    return pd.DataFrame(lst)
 
 def get_us_deaths(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     us_data = nyt_data_us[(nyt_data_us.date >= start_date) & (nyt_data_us.date <= end_date)]
@@ -120,11 +138,18 @@ def get_us_deaths(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.t
 get_state_hospitalizations
 Same as above, hospitalizations
 """
-def get_state_hospitalizations(state_code, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
-    state_data = hhs_data[hhs_data.state == state_code]
-    state_data = state_data.sort_values(by='date', axis=0)
-    state_data = state_data[(state_data.date >= start_date) & (state_data.date <= end_date)]
-    return state_data[['date', 'inpatient_beds_used_covid']]
+def get_state_hospitalizations(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+    curr_date = start_date
+    state_data = hhs_data[hhs_data.state.isin(state_codes)]
+    max_date = state_data.date.max()
+    lst = []
+    while(curr_date < end_date and curr_date < max_date):
+        day_data = state_data[state_data.date == str(curr_date)]
+        hosp_sum = day_data.inpatient_beds_used_covid.sum()
+        newRow = {'date': curr_date, 'hospitalizations': hosp_sum}
+        lst.append(newRow)
+        curr_date += datetime.timedelta(1)
+    return pd.DataFrame(lst)
 """
 get_us_hospitalizations
 Same as above, hospitalizations
@@ -141,32 +166,32 @@ def get_us_hospitalizations(start_date = pd.Timestamp(2020,1,1), end_date = pd.T
         curr_date += datetime.timedelta(1)
     return pd.DataFrame(lst)
 
-    """
+"""
 get_state_positivity
 Creates dataframe of time series date and test positivity for given state
 inputs:
- state_code: 2-letter code of state
+ state_code: list of 2-letter codes of states
  start_date (pd.Timestamp): starting date, defaults to 1-1-2020
  end_date (pd.Timestamp): ending date, defaults to today 
 returns:
  df with 'date' and 'test_positivity'
 """
-def get_state_positivity(state_code, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
-    test_data_state = test_data[test_data.state == state_code] # Get only data from input State
+def get_state_positivity(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+    test_data_state = test_data[test_data.state.isin(state_codes)] # Get only data from input State
     max_date = test_data.date.max()
     curr_date = start_date
     lst = []
     while(curr_date < end_date and curr_date < max_date): # Loop through all unique dates
         day_data = test_data_state[test_data_state.date == str(curr_date)]
         test_pos = day_data[day_data.overall_outcome == "Positive"].new_results_reported # Get num positive tests
-        test_pos = test_pos.item() if test_pos.any() else 0 # Extract number if exists
+        test_pos = test_pos.sum() if test_pos.any() else 0 # Extract number if exists
         test_neg = day_data[day_data.overall_outcome == "Negative"].new_results_reported # Get num negative tests
-        test_neg = test_neg.item() if test_neg.any() else 0 # Extract number if exists
+        test_neg = test_neg.sum() if test_neg.any() else 0 # Extract number if exists
         if(test_pos == 0 and test_neg == 0):
             test_pct = 0 # Fixes divide by zero issue
         else:
             test_pct = test_pos/ (test_pos + test_neg) * 100
-        newRow = {"date": curr_date, "test_positivity": test_pct}
+        newRow = {"date": curr_date, "test_positivity": test_pct, "positive_tests" : test_pos, "negative_tests" : test_neg}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
 
