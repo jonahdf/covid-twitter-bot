@@ -69,7 +69,6 @@ nyt_data_state = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19
 client = Socrata("healthdata.gov", None)
 results = client.get("g62h-syeh", limit=2000000)
 test_results = client.get("j8mb-icvb", limit=2000000)
-provisional = client.get("4cnb-m4rz", limit=2000000)
 
 # Filter data to get columns of interest
 hhs_data = pd.DataFrame.from_records(results)[['state', 'date', 'inpatient_beds_used_covid']]
@@ -78,7 +77,16 @@ hhs_data = hhs_data.astype({'inpatient_beds_used_covid': 'int32'})
 test_data = pd.DataFrame.from_records(test_results)[['state', 'date', 'overall_outcome', 'new_results_reported']]
 test_data.new_results_reported = test_data.new_results_reported.fillna(0)
 test_data = test_data.astype({'new_results_reported': 'int32'})
-hhs_provisional = pd.DataFrame.from_records(provisional)
+
+# For provisional data, gets days since most recent update of HHS time series
+max_date = hhs_data.date.max()
+provisional = client.get("4cnb-m4rz", limit=2000000, where=f"update_date > '{max_date}'")
+hhs_provisional = pd.DataFrame.from_records(provisional)[['update_date', 'archive_link']]
+hhs_provisional.update_date = hhs_provisional.update_date.apply(lambda x: x[:10])
+hhs_provisional.update_date = pd.to_datetime(hhs_provisional.update_date)
+# Gets last archive of every day
+group = hhs_provisional.groupby(['update_date'])
+hhs_provisional = group.last()
 
 # Make date columns in proper format
 hhs_data.date = hhs_data.date.apply(lambda x: x[:10])
