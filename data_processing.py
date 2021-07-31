@@ -1,67 +1,7 @@
 import pandas as pd
 from sodapy import Socrata
 import datetime
-
-# Definitions:
-states = {
-        'AK': 'Alaska',
-        'AL': 'Alabama',
-        'AR': 'Arkansas',
-        'AS': 'American Samoa',
-        'AZ': 'Arizona',
-        'CA': 'California',
-        'CO': 'Colorado',
-        'CT': 'Connecticut',
-        'DC': 'District of Columbia',
-        'DE': 'Delaware',
-        'FL': 'Florida',
-        'GA': 'Georgia',
-        'GU': 'Guam',
-        'HI': 'Hawaii',
-        'IA': 'Iowa',
-        'ID': 'Idaho',
-        'IL': 'Illinois',
-        'IN': 'Indiana',
-        'KS': 'Kansas',
-        'KY': 'Kentucky',
-        'LA': 'Louisiana',
-        'MA': 'Massachusetts',
-        'MD': 'Maryland',
-        'ME': 'Maine',
-        'MI': 'Michigan',
-        'MN': 'Minnesota',
-        'MO': 'Missouri',
-        'MP': 'Northern Mariana Islands',
-        'MS': 'Mississippi',
-        'MT': 'Montana',
-        'NA': 'National',
-        'NC': 'North Carolina',
-        'ND': 'North Dakota',
-        'NE': 'Nebraska',
-        'NH': 'New Hampshire',
-        'NJ': 'New Jersey',
-        'NM': 'New Mexico',
-        'NV': 'Nevada',
-        'NY': 'New York',
-        'OH': 'Ohio',
-        'OK': 'Oklahoma',
-        'OR': 'Oregon',
-        'PA': 'Pennsylvania',
-        'PR': 'Puerto Rico',
-        'RI': 'Rhode Island',
-        'SC': 'South Carolina',
-        'SD': 'South Dakota',
-        'TN': 'Tennessee',
-        'TX': 'Texas',
-        'UT': 'Utah',
-        'VA': 'Virginia',
-        'VI': 'Virgin Islands',
-        'VT': 'Vermont',
-        'WA': 'Washington',
-        'WI': 'Wisconsin',
-        'WV': 'West Virginia',
-        'WY': 'Wyoming'
-}
+import definitions
 
 # Get all raw data
 nyt_data_us = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/rolling-averages/us.csv")
@@ -120,7 +60,7 @@ returns:
 """
 def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     curr_date = start_date
-    input_states = [states[s] for s in state_codes]
+    input_states = [definitions.states[s] for s in state_codes]
     state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
     max_date = state_data.date.max()
     lst = []
@@ -142,13 +82,13 @@ Same as above, deaths
 """
 def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     curr_date = start_date
-    input_states = [states[s] for s in state_codes]
+    input_states = [definitions.states[s] for s in state_codes]
     state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
     max_date = state_data.date.max()
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        case_sum = day_data.cases.sum()
+        case_sum = day_data.deaths.sum()
         newRow = {'date': curr_date, 'deaths': case_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
