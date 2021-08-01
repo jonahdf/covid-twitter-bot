@@ -19,6 +19,7 @@ rolling: Boolean, True to overlay 7-day average
 def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size':13, 'weight':'light'}):
     ax = ax or plt.gca()
     x, y0 = data.date, data.iloc[:,1]
+    ax.margins(y=.12)
     if(rolling):
         y1 = data.iloc[:,1].rolling(7).mean()
         ax.plot(x, y0, alpha=.3, color=plot_color)
@@ -29,15 +30,21 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
         ax.fill_between(x, y0, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
     ax.set_title(label, fontdict={'size': 20})
     subtext = []
-    for i in [-1,-2,-7]:
+    for i in [-1,-8]:
         last_update_day = x.iloc[i].strftime('%b-%d')
         last_val = round(y0.iloc[i], 1)
         last_val_formatted = '{:,}'.format(last_val)
         subtext.append(f" {last_update_day}: {last_val_formatted}")
-
     ax.text(.5, 0.97, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
     ax.text(.5, 0.94, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
-    ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
+    if rolling:
+        if label == "Test Positivity":
+            avg = round(y1.iloc[-1], 1)
+        else:
+            avg = int(round(y1.iloc[-1]))
+        avg_formatted = '{:,}'.format(avg)
+        subtext.append(f" 7-day Average: {avg_formatted}")
+        ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.grid(alpha=.4)
     ax.set_ylim(0)
@@ -161,9 +168,9 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
     fig, axs = plt.subplots(2,2, dpi=300, figsize=[6.4,3.6], subplot_kw={'fc':'white'})
     plt.subplots_adjust(wspace=0.05, hspace=0, bottom=0)
     plot_table(case, axs[0][0], plot_color=("xkcd:light red", "xkcd:pale pink"))
-    plot_table(death, axs[1][0], plot_color=("xkcd:purplish", "xkcd:light lavender"))
-    plot_table(hosp, axs[1][1], plot_color=("xkcd:steel grey", "xkcd:light grey"))
-    plot_table(pos, axs[0][1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
+    plot_table(pos, axs[0][1], plot_color=("xkcd:purplish", "xkcd:light lavender"))
+    plot_table(death, axs[1][0], plot_color=("xkcd:steel grey", "xkcd:light grey"))
+    plot_table(hosp, axs[1][1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n All Numbers are 7-day Rolling Averages", fontweight="bold")
     plt.savefig(f"images/tables/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
     print(f"LOG: Plotted tables for {region}")
