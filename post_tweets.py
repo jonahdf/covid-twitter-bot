@@ -31,7 +31,7 @@ def post():
 
     # Posts tweets in all defined regions, with current images 
     regions_to_post = definitions.regions.keys()
-    lastTweet = api.update_status(f"COVID Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS - Hospitalizations and tests\nNYT - Cases and deaths") 
+    lastTweet = api.update_status(f"#COVID19 Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS - Hospitalizations and tests\nNYT - Cases and deaths") 
     for region in regions_to_post:
         media1 = api.media_upload(f"./images/graphs/{region}.png")
         media2 = api.media_upload(f"./images/tables/{region}.png")
