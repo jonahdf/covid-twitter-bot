@@ -167,3 +167,13 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n All Numbers are 7-day Rolling Averages", fontweight="bold")
     plt.savefig(f"images/tables/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
     print(f"LOG: Plotted tables for {region}")
+
+"""
+generate
+generates all tables and graphs to post
+ regions: List of regions (defined in definitions.regions)
+"""
+def generate(regions = definitions.regions.keys()):
+    for region in regions:
+        plot_tables(region=region)
+        plot_graphs(region=region)
