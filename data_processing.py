@@ -9,6 +9,7 @@ nyt_data_state = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19
 client = Socrata("healthdata.gov", None)
 results = client.get("g62h-syeh", limit=2000000)
 test_results = client.get("j8mb-icvb", limit=2000000)
+print("LOG: Fetched all raw data")
 
 # Filter data to get columns of interest
 hhs_data = pd.DataFrame.from_records(results)[['state', 'date', 'inpatient_beds_used_covid']]
@@ -17,6 +18,7 @@ hhs_data = hhs_data.astype({'inpatient_beds_used_covid': 'int32'})
 test_data = pd.DataFrame.from_records(test_results)[['state', 'date', 'overall_outcome', 'new_results_reported']]
 test_data.new_results_reported = test_data.new_results_reported.fillna(0)
 test_data = test_data.astype({'new_results_reported': 'int32'})
+print("LOG: Filtered Data")
 
 # For provisional data, gets days since most recent update of HHS time series
 max_date = hhs_data.date.max()
@@ -36,9 +38,12 @@ for a in hhs_provisional.iterrows():
     url = a[1].item()['url']
     df = pd.read_csv(url)[['state', 'inpatient_beds_used_covid']]
     df['date']=date
-    frames.append(df)
+    if date > pd.Timestamp(max_date): # Avoids double counting if provisional update came after real update
+        frames.append(df)
 frames.append(hhs_data)
 hhs_data = (pd.concat(frames))
+print("LOG: Added HHS Provisional data")
+
 
 # Make date columns in proper format
 # hhs_data.date = hhs_data.date.apply(lambda x: x[:10])
@@ -47,6 +52,8 @@ test_data.date = test_data.date.apply(lambda x: x[:10])
 test_data.date = pd.to_datetime(test_data.date)
 nyt_data_us.date = pd.to_datetime(nyt_data_us.date)
 nyt_data_state.date = pd.to_datetime(nyt_data_state.date)
+print("LOG: Done getting data")
+
 
 """
 get_state_cases

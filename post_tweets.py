@@ -19,13 +19,8 @@ auth = tweepy.OAuthHandler(api_key, api_secret_key)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
-# media1 = api.media_upload("./images/graphs/USA.png")
-# media2 = api.media_upload("./images/tables/USA.png")
-# print(api.update_status("Test", media_ids=[media1.media_id, media2.media_id]))
-
-# regions_to_post = definitions.regions.keys()
-regions_to_post = ["USA"]
-lastTweet = api.update_status(f"COVID Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS - Hospitalizations and tests\nNYT - Cases and deaths\nUntil Twitter trusts me, can only post US data") 
+regions_to_post = definitions.regions.keys()
+lastTweet = api.update_status(f"COVID Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS - Hospitalizations and tests\nNYT - Cases and deaths") 
 for region in regions_to_post:
     media1 = api.media_upload(f"./images/graphs/{region}.png")
     media2 = api.media_upload(f"./images/tables/{region}.png")

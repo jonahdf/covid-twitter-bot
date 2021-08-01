@@ -1,5 +1,8 @@
 import data_viz as dv
 import definitions
+import matplotlib
+
+print(matplotlib.matplotlib_fname())
 
 # Generates files for all regions, current date
 for region in definitions.regions.keys():
