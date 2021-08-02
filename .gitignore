@@ -2,3 +2,5 @@
 *.pyc
 main.ipynb
 *.png
+src/.DS_Store
+images/.DS_Store
