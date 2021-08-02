@@ -12,7 +12,7 @@ def run(post = False):
     data_processing.get_data()
     data_viz.generate()
     if post:
-        post_tweets.post_tweets()
+        post_tweets.post()
 
 # Parses command line arguments. Add a -t to post tweets
 if __name__ == "__main__":
