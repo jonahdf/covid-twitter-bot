@@ -162,7 +162,7 @@ returns:
 """
 def get_state_positivity(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     test_data_state = test_data[test_data.state.isin(state_codes)] # Get only data from input State
-    max_date = test_data.date.max()
+    max_date = test_data_state.date.max()
     curr_date = start_date
     lst = []
     while(curr_date <= end_date and curr_date <= max_date): # Loop through all unique dates
