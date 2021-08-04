@@ -4,7 +4,7 @@ import datetime
 import definitions
 
 # global variables for main data:
-hhs_data, test_data, nyt_data_us, nyt_data_state = [],[],[],[]
+hhs_data, test_data, nyt_data_us, nyt_data_state, max_hosp_date = [],[],[],[],[]
 
 """
 get_data()
@@ -16,6 +16,7 @@ def get_data():
     global nyt_data_state
     global test_data
     global hhs_data
+    global max_hosp_date
 
     nyt_data_us = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/rolling-averages/us.csv")
     nyt_data_state = pd.read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/rolling-averages/us-states.csv")
@@ -35,6 +36,7 @@ def get_data():
 
     # For provisional data, gets days since most recent update of HHS time series
     max_date = hhs_data.date.max()
+    max_hosp_date = max_date
     provisional = client.get("4cnb-m4rz", limit=2000000, where=f"update_date > '{max_date}'")
     hhs_provisional = pd.DataFrame.from_records(provisional)[['update_date', 'archive_link']]
     hhs_provisional.update_date = hhs_provisional.update_date.apply(lambda x: x[:10])
