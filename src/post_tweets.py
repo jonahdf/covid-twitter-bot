@@ -35,10 +35,11 @@ def post():
     for region in regions_to_post:
         media1 = api.media_upload(f"./images/graphs/{region}.png")
         media2 = api.media_upload(f"./images/tables/{region}.png")
+        media3 = api.media_upload(f"./images/rt/{region}.png")
         if len(definitions.regions[region]) > 1 and region != "USA":
             regionString = region + " (" + ", ".join(definitions.regions[region]) + ")"
         else:
             regionString = region
-
-        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media1.media_id, media2.media_id])
+        regionString += "\n Beta-testing new hospitalization Rt plots. Interpret recent days with caution"
+        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media1.media_id, media2.media_id, media3.media_id])
         print(f"posted tweet: {regionString}")

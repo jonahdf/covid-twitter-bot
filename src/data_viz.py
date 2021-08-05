@@ -85,6 +85,83 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,3,1), end_date=pd.Tim
     plt.close(fig)
 
 
+
+"""
+plot_rt
+Individual Rt plots using hospitalizations
+"""
+def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light'}, showPeak=False):
+    ax = ax or plt.gca()
+    x, y0 = data.date, data.iloc[:,1]
+    ax.margins(y=.12)
+
+    y1 = data.iloc[:,1].rolling(7).mean()
+    ax.plot(x, y0, alpha=.3, color=plot_color)
+    ax.plot(x, y1, color=plot_color)
+    # Fills between 1 and plot
+    ax.fill_between(x, y1, 1, where=(y1>1), color='red', alpha=0.2)
+    ax.fill_between(x, y1, 1, where=(y1<1), color='green', alpha=0.2)
+    
+    # Get numbers for today and last week
+    subtext = []
+    for i in [-1,-8]:
+        last_update_day = x.iloc[i].strftime('%b-%d')
+        last_val = round(y0.iloc[i], 2)
+        last_val_formatted = '{:,}'.format(last_val)
+        subtext.append(f" {last_update_day}: {last_val_formatted}")
+    ax.text(.5, 0.97, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
+    ax.text(.5, 0.94, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
+    
+    # Find numbers for 7 day average and delta
+    avg_formatted = round(y1.iloc[-1],2)
+    avg_delta = y1.iloc[-1] - y1.iloc[-2]
+    avg_delta_formatted = round(avg_delta,2)
+    subtext.append(f" 7-day Average: {avg_formatted}")
+    subtext.append(f" Change in 7-day Average from yesterday: {avg_delta_formatted}")
+    # If region is US, calculate time to peak/trough
+    if(showPeak):
+        avg_delta_diff = 0
+        for i in range(1,4):
+            avg_delta_diff += y1.iloc[0-i] - y1.iloc[0-i-1]
+        avg_delta_diff /= 3
+        print(avg_delta_diff)
+        time_to_peak = int(round((1 - y1.iloc[-1]) / avg_delta_diff)) 
+        subtext.append(f" Days before peak/trough at current rate: {time_to_peak}")
+        ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
+
+
+    ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
+    ax.text(.5, 0.88, subtext[3], ha='center',transform=ax.transAxes, fontdict=font)
+    ax.grid(alpha=.4)
+    ax.axhline(1, linestyle="--", color='black')
+    return ax
+"""
+generate_rt
+Generates hospitalization reproduction rate image
+"""
+def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,11,1), end_date=pd.Timestamp.today(), showPeak=False):
+    if(not regionString):
+        regionString = region
+    label=f"{regionString} Weekly Growth in Hospitalizations"
+    if(region == "USA"):
+        data = dp.get_us_hospitalizations(start_date=start_date, end_date=end_date)
+        data['pct_chg'] = 1 + data.iloc[:,1].pct_change(periods=7)
+    else:
+        if(isinstance(region, list)):
+            data= dp.get_state_hospitalizations(state_codes=region, start_date=start_date, end_date=end_date)
+        else:
+            data = dp.get_state_hospitalizations(state_codes=definitions.regions[region], start_date=start_date, end_date=end_date)
+        data['avg'] = data.iloc[:,1].rolling(7).mean()
+        data['pct_chg'] = 1 + data.avg.pct_change(periods=7)
+    
+    fig,ax = plt.subplots(dpi=100, figsize=(15,10))
+    plot_rt(data[['date', 'pct_chg']], showPeak=showPeak)
+    fig.autofmt_xdate()
+    fig.suptitle(label, fontsize=24)
+    plt.savefig(f"images/rt/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
+    print(f"LOG: Plotted rt for {region}")
+    plt.close(fig)
+
 """
 plot_table
 Plots table of input data. Data must be 3 x 7
@@ -174,6 +251,7 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n All Numbers are 7-day Rolling Averages", fontweight="bold")
     plt.savefig(f"images/tables/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
     print(f"LOG: Plotted tables for {region}")
+    plt.close(fig)
 
 """
 generate
@@ -184,3 +262,7 @@ def generate(regions = definitions.regions.keys()):
     for region in regions:
         plot_tables(region=region)
         plot_graphs(region=region)
+        if(region == "USA"):
+            generate_rt(region=region, showPeak=True)
+        else:
+            generate_rt(region=region, showPeak=False)
