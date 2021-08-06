@@ -25,3 +25,4 @@ Dependencies are listed in `requirements.txt`. Install with `pip install -r requ
 - If you are interested in contributing, shoot me an email (jonah.fleishhacker@gmail.com)
 
 ![image](https://pbs.twimg.com/media/E7wWwDLWEAAZ8Vr?format=jpg&name=large)
+![image](https://pbs.twimg.com/media/E7_oMr3WEAU7ux2?format=jpg&name=large)
