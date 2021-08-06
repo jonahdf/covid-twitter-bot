@@ -1,7 +1,6 @@
 # covid-twitter-bot
-
+Gets NYT/HHS COVID data, creates visualizations, and posts daily to Twitter [@jonahfleish](https://twitter.com/jonahfleish)
 ![image](https://pbs.twimg.com/media/E7wWvw-WEAUArNE?format=jpg&name=4096x4096)
-Gets NYT/HHS COVID data, creates visualizations, and posts daily to Twitter @jonahfleish
 
 # Dependencies
 Python >= 3.8
