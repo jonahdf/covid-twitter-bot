@@ -24,5 +24,6 @@ Dependencies are listed in `requirements.txt`. Install with `pip install -r requ
 - Feel free to leave Github issues if there is a new feature or bug you notice and I'll try to respond as soon as I can
 - If you are interested in contributing, shoot me an email (jonah.fleishhacker@gmail.com)
 
+# Visualization Samples
 ![image](https://pbs.twimg.com/media/E7wWwDLWEAAZ8Vr?format=jpg&name=large)
 ![image](https://pbs.twimg.com/media/E7_oMr3WEAU7ux2?format=jpg&name=large)
