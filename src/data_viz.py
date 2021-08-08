@@ -125,9 +125,7 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
             avg_delta_diff += y1.iloc[0-i] - y1.iloc[0-i-1]
         avg_delta_diff /= 3
         print(avg_delta_diff)
-        time_to_peak = int(round((1 - y1.iloc[-1]) / avg_delta_diff)) 
-        subtext.append(f" Days before peak/trough at current rate: {time_to_peak}")
-        ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
+        time_to_peak = int(round((1 - y1.iloc[-1]) / avg_delta_diff))
 
 
     ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
