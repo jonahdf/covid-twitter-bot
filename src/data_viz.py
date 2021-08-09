@@ -82,7 +82,7 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Tim
     fig.patch.set_facecolor('white')
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23)
     fig.tight_layout()
-    plt.savefig(f"../images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
+    plt.savefig(f"images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
     print(f"LOG: Plotted graphs for {region}")
     plt.close(fig)
 
@@ -122,20 +122,26 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
     subtext.append(f" Change in 7-day Average from yesterday: {avg_delta_formatted}")
     # If region is US, calculate time to peak/trough
     if(showPeak):
-        avg_delta_diff = 0
+        avg_delta_diff, avg_delta_diff2 = 0,0
         for i in range(1,4):
-            avg_delta_diff += y1.iloc[0-i] - y1.iloc[0-i-1]
+            avg_delta_diff += y0.iloc[0-i] - y0.iloc[0-i-1]
+            avg_delta_diff2 += y1.iloc[0-i] - y1.iloc[0-i-1]
         avg_delta_diff /= 3
-        print(avg_delta_diff)
-        time_to_peak = int(round((1 - y1.iloc[-1]) / avg_delta_diff))
-
+        avg_delta_diff2 /= 3
+        time_to_peak_opt = int(round((1 - y0.iloc[-2]) / avg_delta_diff))
+        time_to_peak_con = int(round((1 - y1.iloc[-2]) / avg_delta_diff2))
+        subtext.append(f" Time to peak: {time_to_peak_opt}-{time_to_peak_con} days")
+        ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
 
     ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
     ax.text(.5, 0.88, subtext[3], ha='center',transform=ax.transAxes, fontdict=font)
+
     ax.grid(alpha=.4)
     ax.axhline(1, linestyle="--", color='black')
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting")
+    if(showPeak):
+        ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting\n\nProjected peak is calculated using average of last 3 days of Rt. Range is from using raw reported numbers (deflated, optimistic) to using 7-day averages (lagged, conservative)")
     return ax
 """
 generate_rt
