@@ -19,7 +19,7 @@ rolling: Boolean, True to overlay 7-day average
 def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size':13, 'weight':'light'}):
     ax = ax or plt.gca()
     x, y0 = data.date, data.iloc[:,1]
-    ax.margins(y=.12)
+    ax.margins(y=.12, x=.01)
     if(rolling):
         y1 = data.iloc[:,1].rolling(7).mean()
         ax.plot(x, y0, alpha=.3, color=plot_color)
@@ -35,8 +35,8 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
         last_val = round(y0.iloc[i], 1)
         last_val_formatted = '{:,}'.format(last_val)
         subtext.append(f" {last_update_day}: {last_val_formatted}")
-    ax.text(.5, 0.97, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
-    ax.text(.5, 0.94, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
+    ax.text(.5, 0.96, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
+    ax.text(.5, 0.92, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
     if rolling:
         if label == "Test Positivity":
             avg = round(y1.iloc[-1], 1)
@@ -44,7 +44,7 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
             avg = int(round(y1.iloc[-1]))
         avg_formatted = '{:,}'.format(avg)
         subtext.append(f" 7-day Average: {avg_formatted}")
-        ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
+        ax.text(.5, 0.88, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.grid(alpha=.4)
     ax.set_ylim(0)
@@ -60,7 +60,7 @@ region: Region to plot. Regions defined in definitions.py
 start_date: Date to start plot
 end_date: Date to end plot
 """
-def plot_graphs(region="USA", start_date=pd.Timestamp(2020,3,1), end_date=pd.Timestamp.today()):
+def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Timestamp.today()):
     if region == "USA":
         pos = dp.get_us_positivity(start_date, end_date)
         case = dp.get_us_cases(start_date, end_date)
@@ -73,14 +73,16 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,3,1), end_date=pd.Tim
         hosp = dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date)
 
 
-    fig, axs = plt.subplots(1,4, figsize=(25,10))
-    plot(pos, axs[0], plot_color="purple", label=f"Test Positivity")
-    plot(case, axs[1], plot_color="red", label=f"Cases")
-    plot(hosp, axs[2], plot_color="blue", label=f"In Hospital")
-    plot(death, axs[3], plot_color="black", label=f"Deaths")
-    fig.autofmt_xdate()
+    fig, axs = plt.subplots(2,2, figsize=(20,14))
+    plot(pos, axs[0][1], plot_color="purple", label=f"Test Positivity")
+    plot(case, axs[0][0], plot_color="red", label=f"Cases")
+    plot(hosp, axs[1][1], plot_color="blue", label=f"In Hospital")
+    plot(death, axs[1][0], plot_color="black", label=f"Deaths")
+    # fig.autofmt_xdate()
+    fig.patch.set_facecolor('white')
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23)
-    plt.savefig(f"images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
+    fig.tight_layout()
+    plt.savefig(f"../images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
     print(f"LOG: Plotted graphs for {region}")
     plt.close(fig)
 
@@ -93,7 +95,7 @@ Individual Rt plots using hospitalizations
 def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light'}, showPeak=False):
     ax = ax or plt.gca()
     x, y0 = data.date, data.iloc[:,1]
-    ax.margins(y=.12)
+    ax.margins(y=.12, x=.03)
 
     y1 = data.iloc[:,1].rolling(7).mean()
     ax.plot(x, y0, alpha=.3, color=plot_color)
@@ -132,6 +134,8 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
     ax.text(.5, 0.88, subtext[3], ha='center',transform=ax.transAxes, fontdict=font)
     ax.grid(alpha=.4)
     ax.axhline(1, linestyle="--", color='black')
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
+    ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting")
     return ax
 """
 generate_rt
@@ -149,8 +153,8 @@ def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,1
             data= dp.get_state_hospitalizations(state_codes=region, start_date=start_date, end_date=end_date)
         else:
             data = dp.get_state_hospitalizations(state_codes=definitions.regions[region], start_date=start_date, end_date=end_date)
-        data['avg'] = data.iloc[:,1].rolling(7).mean()
-        data['pct_chg'] = 1 + data.avg.pct_change(periods=7)
+        # data['avg'] = data.iloc[:,1].rolling(7).mean() # For double smoothing
+        data['pct_chg'] = 1 + data.iloc[:,1].pct_change(periods=7)
     
     fig,ax = plt.subplots(dpi=100, figsize=(15,10))
     plot_rt(data[['date', 'pct_chg']], showPeak=showPeak)
@@ -220,7 +224,7 @@ def get_table(data, name="cases"):
 
 
 """
-plot_graphs
+plot_tables
 Plots 4 tables with 7 day averages for timeframes and peak
 -Test positivity, cases, deaths, hospitalizations
 
