@@ -47,7 +47,7 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
         ax.text(.5, 0.88, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.grid(alpha=.4)
-    ax.set_ylim(0)
+    ax.set_ylim(0, y1.max()*1.18)
     return ax
 
 
@@ -82,6 +82,7 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Tim
     fig.patch.set_facecolor('white')
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23)
     fig.tight_layout()
+    plt.subplots_adjust(top=0.92)
     plt.savefig(f"images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
     print(f"LOG: Plotted graphs for {region}")
     plt.close(fig)
@@ -123,14 +124,17 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
     # If region is US, calculate time to peak/trough
     if(showPeak):
         avg_delta_diff, avg_delta_diff2 = 0,0
-        for i in range(1,4):
+        for i in range(1,6):
             avg_delta_diff += y0.iloc[0-i] - y0.iloc[0-i-1]
             avg_delta_diff2 += y1.iloc[0-i] - y1.iloc[0-i-1]
-        avg_delta_diff /= 3
-        avg_delta_diff2 /= 3
+        avg_delta_diff /= 5
+        avg_delta_diff2 /= 5
         time_to_peak_opt = int(round((1 - y0.iloc[-2]) / avg_delta_diff))
         time_to_peak_con = int(round((1 - y1.iloc[-2]) / avg_delta_diff2))
-        subtext.append(f" Time to peak: {time_to_peak_opt}-{time_to_peak_con} days")
+        if(min(time_to_peak_opt,time_to_peak_con) < 0 or max(time_to_peak_opt,time_to_peak_con) > 30):
+            subtext.append(f" Rough time to peak: Unknown")
+        else:
+            subtext.append(f" Rough time to peak at current rate: ~{round(sum([time_to_peak_opt,time_to_peak_con])/2)} days")
         ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
 
     ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
@@ -270,7 +274,4 @@ def generate(regions = definitions.regions.keys()):
     for region in regions:
         plot_tables(region=region)
         plot_graphs(region=region)
-        if(region == "USA"):
-            generate_rt(region=region, showPeak=True)
-        else:
-            generate_rt(region=region, showPeak=False)
+        generate_rt(region=region, showPeak=True)
