@@ -145,7 +145,7 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting")
     if(showPeak):
-        ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting\n\nProjected peak is calculated using average of last 3 days of Rt. Range is from using raw reported numbers (deflated, optimistic) to using 7-day averages (lagged, conservative)")
+        ax.set_xlabel("* Dark line is 7-day average. Recent days might be artificially lower due to reporting\n\nProjected peak is calculated using average change in last 5 days of Rt.")
     return ax
 """
 generate_rt
