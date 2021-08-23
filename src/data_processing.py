@@ -181,7 +181,10 @@ def get_state_positivity(state_codes, start_date = pd.Timestamp(2020,1,1), end_d
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
 
-    return pd.DataFrame(lst) # Create dataframe with all dates and test positivity
+    df = pd.DataFrame(lst) # Create dataframe with all dates and test positivity
+    a = df.rolling(7).sum()
+    df['avg'] = a.apply(lambda x: 100* (x.positive_tests / (x.positive_tests + x.negative_tests)), axis=1)
+    return df
 
 """
 get_us_positivity
@@ -203,12 +206,13 @@ def get_us_positivity(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timesta
         pos_sum = test_pos.new_results_reported.sum()
         neg_sum = test_neg.new_results_reported.sum()
         test_positivity = pos_sum / (pos_sum + neg_sum) * 100
-        newRow = {"date": curr_date, "test_positivity": test_positivity}
+        newRow = {"date": curr_date, "test_positivity": test_positivity, "positive_tests" : pos_sum, "negative_tests": neg_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
-    return pd.DataFrame(lst)
-
-
-
+    df = pd.DataFrame(lst)
+    # Calculates 7-day averages of test positivity using sums over the window
+    a = df.rolling(7).sum()
+    df['avg'] = a.apply(lambda x: 100* (x.positive_tests / (x.positive_tests + x.negative_tests)), axis=1)
+    return df
 
 

@@ -21,7 +21,11 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
     x, y0 = data.date, data.iloc[:,1]
     ax.margins(y=.12, x=.01)
     if(rolling):
-        y1 = data.iloc[:,1].rolling(7).mean()
+        # If graphing test positivity, make sure to use summed data as 7DA rather than each individual day's measurement
+        if label == "Test Positivity":
+            y1 = data.avg
+        else:
+            y1 = data.iloc[:,1].rolling(7).mean()
         ax.plot(x, y0, alpha=.3, color=plot_color)
         ax.plot(x, y1, color=plot_color)
         ax.fill_between(x, y1, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
