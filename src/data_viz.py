@@ -202,6 +202,8 @@ name: Name for metric in table
 """
 def get_table(data, name="cases"):
     data.iloc[:,1] = data.iloc[:,1].rolling(7).mean()
+    if name == "Test Positivity":
+        data.iloc[:,1] = data.avg
     maxDate = data['date'].max()
     recentNum = data[data.date == maxDate].iloc[:,1].item()
     if "Test Positivity" in name:
