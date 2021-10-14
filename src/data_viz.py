@@ -136,9 +136,9 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
         time_to_peak_opt = int(round((1 - y0.iloc[-2]) / avg_delta_diff))
         time_to_peak_con = int(round((1 - y1.iloc[-2]) / avg_delta_diff2))
         if(min(time_to_peak_opt,time_to_peak_con) < 0 or max(time_to_peak_opt,time_to_peak_con) > 30):
-            subtext.append(f" Rough time to peak: Unknown")
+            subtext.append(f" Rough time to peak/trough: Unknown")
         else:
-            subtext.append(f" Rough time to peak at current rate: ~{round(sum([time_to_peak_opt,time_to_peak_con])/2)} days")
+            subtext.append(f" Rough time to peak/trough at current rate: ~{round(sum([time_to_peak_opt,time_to_peak_con])/2)} days")
         ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
 
     ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
@@ -155,7 +155,7 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
 generate_rt
 Generates hospitalization reproduction rate image
 """
-def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,11,1), end_date=pd.Timestamp.today(), showPeak=False):
+def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,9,1), end_date=pd.Timestamp.today(), showPeak=False):
     if(not regionString):
         regionString = region
     label=f"{regionString} Weekly Growth in Hospitalizations"
