@@ -276,7 +276,13 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
 def generate_maps(path=""):
     state_rt = dp.get_all_state_rt()
     state_hosps = dp.get_all_state_hosps()
-    hosp_fig = px.choropleth(state_hosps, locations='State', locationmode="USA-states", color="Hospitalizations per Million", scope="usa", color_continuous_scale='YlOrRd')
+    hosp_fig = px.choropleth(state_hosps, 
+                            locations='State', 
+                            locationmode="USA-states", 
+                            color="Hospitalizations per Million", 
+                            scope="usa", 
+                            range_color=(0,500),
+                            color_continuous_scale='YlOrRd')
     hosp_fig.update_layout(
         title={
             'text': f"USA Hospitalizations per Million\n{pd.Timestamp.today().date()}",
@@ -286,7 +292,14 @@ def generate_maps(path=""):
             'yanchor': 'top'},
         coloraxis_colorbar_title="")
         
-    rt_fig = px.choropleth(state_rt, locations='State', locationmode="USA-states", color="Rt", scope="usa", color_continuous_scale='YlOrRd')
+    rt_fig = px.choropleth(state_rt, 
+                        locations='State', 
+                        locationmode="USA-states", 
+                        color="Rt", 
+                        scope="usa", 
+                        color_continuous_scale='balance',
+                        color_continuous_midpoint=1,
+                        range_color=(.7,1.3))
     rt_fig.update_layout(
         title={
             'text': f"USA Weekly Growth in Hospitalizations\n{pd.Timestamp.today().date()}",
