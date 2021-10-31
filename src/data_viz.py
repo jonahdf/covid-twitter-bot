@@ -279,7 +279,7 @@ def generate_maps(path=""):
     hosp_fig = px.choropleth(state_hosps, locations='State', locationmode="USA-states", color="Hospitalizations per Million", scope="usa", color_continuous_scale='YlOrRd')
     hosp_fig.update_layout(
         title={
-            'text': "USA Hospitalizations per Million",
+            'text': f"USA Hospitalizations per Million\n{pd.Timestamp.today().date()}",
             'y':0.9,
             'x':0.5,
             'xanchor': 'center',
@@ -289,7 +289,7 @@ def generate_maps(path=""):
     rt_fig = px.choropleth(state_rt, locations='State', locationmode="USA-states", color="Rt", scope="usa", color_continuous_scale='YlOrRd')
     rt_fig.update_layout(
         title={
-            'text': "USA Weekly Growth in Hospitalizations",
+            'text': f"USA Weekly Growth in Hospitalizations\n{pd.Timestamp.today().date()}",
             'y':0.9,
             'x':0.5,
             'xanchor': 'center',
