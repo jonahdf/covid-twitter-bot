@@ -71,7 +71,7 @@ def get_data():
 
 
 """
-get_state_cases
+get_state_cases 
 Creates dataframe of time series date and cases for given state
 inputs:
  state_codes: List of 2-letter codes of states to query
@@ -83,12 +83,13 @@ returns:
 def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     curr_date = start_date
     input_states = [definitions.states[s] for s in state_codes]
-    state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
+    state_data = nyt_data_state[nyt_data_state.state.isin(input_states)][:]
     max_date = state_data.date.max()
+    states_population = sum([definitions.populations[s] for s in input_states])
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        case_sum = day_data.cases.sum()
+        case_sum = day_data.cases.sum() / states_population * 1000000
         newRow = {'date': curr_date, 'cases': case_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
@@ -107,10 +108,11 @@ def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date 
     input_states = [definitions.states[s] for s in state_codes]
     state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
     max_date = state_data.date.max()
+    states_population = sum([definitions.populations[s] for s in input_states])
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        case_sum = day_data.deaths.sum()
+        case_sum = day_data.deaths.sum() / states_population * 1000000
         newRow = {'date': curr_date, 'deaths': case_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
@@ -127,11 +129,13 @@ Same as above, hospitalizations
 def get_state_hospitalizations(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
     curr_date = start_date
     state_data = hhs_data[hhs_data.state.isin(state_codes)]
+    input_states = [definitions.states[s] for s in state_codes]
     max_date = state_data.date.max()
+    states_population = sum([definitions.populations[s] for s in input_states])
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        hosp_sum = day_data.inpatient_beds_used_covid.sum()
+        hosp_sum = day_data.inpatient_beds_used_covid.sum() / states_population * 1000000
         newRow = {'date': curr_date, 'hospitalizations': hosp_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
@@ -183,7 +187,7 @@ def get_state_positivity(state_codes, start_date = pd.Timestamp(2020,1,1), end_d
 
     df = pd.DataFrame(lst) # Create dataframe with all dates and test positivity
     a = df.rolling(7).sum()
-    df['avg'] = a.apply(lambda x: 100* (x.positive_tests / (x.positive_tests + x.negative_tests)), axis=1)
+    df['avg'] = a.apply(lambda x: (100* (x.positive_tests / (x.positive_tests + x.negative_tests))) if (x.positive_tests + x.negative_tests) > 0 else None, axis=1)
     return df
 
 """
@@ -201,18 +205,67 @@ def get_us_positivity(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timesta
     lst = []
     while (curr_date <= end_date and curr_date <= max_date):
         test_data_curr = test_data[test_data.date==str(curr_date)]
-        test_pos = test_data_curr[test_data_curr.overall_outcome == "Positive"]
-        test_neg = test_data_curr[test_data_curr.overall_outcome == "Negative"]
-        pos_sum = test_pos.new_results_reported.sum()
-        neg_sum = test_neg.new_results_reported.sum()
-        test_positivity = pos_sum / (pos_sum + neg_sum) * 100
+        test_pos = test_data_curr[test_data_curr.overall_outcome == "Positive"].new_results_reported
+        test_neg = test_data_curr[test_data_curr.overall_outcome == "Negative"].new_results_reported
+        pos_sum = test_pos.sum() if test_pos.any() else 0
+        neg_sum = test_neg.sum() if test_pos.any() else 0
+        test_positivity = pos_sum / (pos_sum + neg_sum) * 100 if (pos_sum + neg_sum) > 0 else None
         newRow = {"date": curr_date, "test_positivity": test_positivity, "positive_tests" : pos_sum, "negative_tests": neg_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
     df = pd.DataFrame(lst)
     # Calculates 7-day averages of test positivity using sums over the window
     a = df.rolling(7).sum()
-    df['avg'] = a.apply(lambda x: 100* (x.positive_tests / (x.positive_tests + x.negative_tests)), axis=1)
+    df['avg'] = a.apply(lambda x: (100* (x.positive_tests / (x.positive_tests + x.negative_tests))) if (x.positive_tests + x.negative_tests) > 0 else None, axis=1)
     return df
 
+"""
+get_all_state_hosps
+Constructs a table of the most recent hospitalizations per capita for every State
+returns: dataframe with state, hosp per million
+"""
+def get_all_state_hosps():
+    state_hosps = pd.DataFrame(columns=['State', 'Hospitalizations'])
+    for state in definitions.states.keys():
+        state_data = hhs_data[hhs_data.state.isin([state])]
+        state_data = state_data[state_data['date'] <= pd.Timestamp.today()]
+        hosps = state_data[state_data['date'] == state_data['date'].max()].inpatient_beds_used_covid.values
+        if not hosps:
+            hosps = False
+        else:
+            hosps = hosps[0]/definitions.populations[definitions.states[state]]*1000000
+            state_hosps = state_hosps.append({"State":state, "Hospitalizations per Million": float(hosps)}, ignore_index=True)
+    return state_hosps
 
+"""
+get_all_state_cases
+Constructs a table of the most recent cases per capita for every State
+returns: dataframe with state, cases per million
+"""
+def get_all_state_cases():
+    state_cases = pd.DataFrame(columns=['State', 'Cases'])
+    for state in definitions.states.keys():
+        state_data = get_state_cases([state], start_date=(pd.Timestamp.today() - pd.Timedelta(days=7)).date()) # adjust end date here
+        if state_data.empty:
+            cases = False
+        else:
+            cases = state_data.cases.sum() / len(state_data)
+            state_cases = state_cases.append({"State":state, "Cases": float(cases)}, ignore_index=True)
+    return state_cases
+
+"""
+get_all_state_rt
+Constructs a table of the most recent rt for every State
+returns: dataframe with state, rt
+"""
+def get_all_state_rt():
+    state_rt = pd.DataFrame(columns=['State', 'Rt'])
+    for state in definitions.states.keys():
+        data = get_state_hospitalizations(state_codes=[state], start_date=(pd.Timestamp.today() - pd.Timedelta(days=20)).date())
+        if data.empty:
+            rt = False
+        else:
+            rt_all = 1 + data.iloc[:,1].pct_change(periods=7).rolling(7).mean()
+            rt = rt_all.mean()
+            state_rt = state_rt.append({"State":state, "Rt": float(rt)}, ignore_index=True)
+    return state_rt

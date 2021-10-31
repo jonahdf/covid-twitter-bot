@@ -36,9 +36,16 @@ def post():
         media1 = api.media_upload(f"./images/graphs/{region}.png")
         media2 = api.media_upload(f"./images/tables/{region}.png")
         media3 = api.media_upload(f"./images/rt/{region}.png")
+        media_ids = [media1.media_id, media2.media_id, media3.media_id]
+        if region == "USA":
+            media4 = api.media_upload(f"./images/maps/hosp.png")
+            media_ids.append(media4.media_id)
+            media5 = api.media_upload(f"./images/maps/rt.png")
+            media_ids.append(media5.media_id)
+
         if len(definitions.regions[region]) > 1 and region != "USA":
             regionString = region + " (" + ", ".join(definitions.regions[region]) + ")"
         else:
             regionString = region
-        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media1.media_id, media2.media_id, media3.media_id])
+        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media_ids])
         print(f"posted tweet: {regionString}")

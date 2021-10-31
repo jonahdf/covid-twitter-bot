@@ -5,7 +5,9 @@ import matplotlib.dates as mdates
 import data_processing as dp
 import definitions
 import math
-
+import plotly.io as pio
+import plotly.express as px
+import kaleido
 
 """
 plot
@@ -39,16 +41,15 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
         last_val = round(y0.iloc[i], 1)
         last_val_formatted = '{:,}'.format(last_val)
         subtext.append(f" {last_update_day}: {last_val_formatted}")
-    ax.text(.5, 0.96, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
-    ax.text(.5, 0.92, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
     if rolling:
-        if label == "Test Positivity":
+        if label == "Test Positivity" or "per" in label:
             avg = round(y1.iloc[-1], 1)
         else:
             avg = int(round(y1.iloc[-1]))
         avg_formatted = '{:,}'.format(avg)
         subtext.append(f" 7-day Average: {avg_formatted}")
-        ax.text(.5, 0.88, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
+    t = ax.text(.5, 0.88, "\n".join(subtext), ha='center',transform=ax.transAxes, fontdict=font)
+    t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor=None))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
     ax.grid(alpha=.4)
     ax.set_ylim(0, y1.max()*1.18)
@@ -64,30 +65,33 @@ region: Region to plot. Regions defined in definitions.py
 start_date: Date to start plot
 end_date: Date to end plot
 """
-def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Timestamp.today()):
+def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Timestamp.today(), path=""):
     if region == "USA":
         pos = dp.get_us_positivity(start_date, end_date)
         case = dp.get_us_cases(start_date, end_date)
         death = dp.get_us_deaths(start_date, end_date)
         hosp = dp.get_us_hospitalizations(start_date, end_date)
+        l2, l3, l4 = "Cases", "In Hospital", "Deaths"
+
     else:
         pos = dp.get_state_positivity(definitions.regions[region], start_date, end_date)
         case = dp.get_state_cases(definitions.regions[region], start_date, end_date)
         death = dp.get_state_deaths(definitions.regions[region], start_date, end_date)
         hosp = dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date)
+        l2, l3, l4 = "Cases per Million", "In Hospital per Million", "Deaths per Million"
 
 
     fig, axs = plt.subplots(2,2, figsize=(20,14))
     plot(pos, axs[0][1], plot_color="purple", label=f"Test Positivity")
-    plot(case, axs[0][0], plot_color="red", label=f"Cases")
-    plot(hosp, axs[1][1], plot_color="blue", label=f"In Hospital")
-    plot(death, axs[1][0], plot_color="black", label=f"Deaths")
+    plot(case, axs[0][0], plot_color="red", label=l2)
+    plot(hosp, axs[1][1], plot_color="blue", label=l3)
+    plot(death, axs[1][0], plot_color="black", label=l4)
     # fig.autofmt_xdate()
     fig.patch.set_facecolor('white')
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23)
     fig.tight_layout()
     plt.subplots_adjust(top=0.92)
-    plt.savefig(f"images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
+    plt.savefig(f"{path}images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
     print(f"LOG: Plotted graphs for {region}")
     plt.close(fig)
 
@@ -116,8 +120,6 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
         last_val = round(y0.iloc[i], 2)
         last_val_formatted = '{:,}'.format(last_val)
         subtext.append(f" {last_update_day}: {last_val_formatted}")
-    ax.text(.5, 0.97, subtext[0], ha='center', transform=ax.transAxes, fontdict=font)
-    ax.text(.5, 0.94, subtext[1], ha='center',transform=ax.transAxes, fontdict=font)
     
     # Find numbers for 7 day average and delta
     avg_formatted = round(y1.iloc[-1],2)
@@ -139,10 +141,10 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
             subtext.append(f" Rough time to peak/trough: Unknown")
         else:
             subtext.append(f" Rough time to peak/trough at current rate: ~{round(sum([time_to_peak_opt,time_to_peak_con])/2)} days")
-        ax.text(.5, 0.85, subtext[4], ha='center',transform=ax.transAxes, fontdict=font)
 
-    ax.text(.5, 0.91, subtext[2], ha='center',transform=ax.transAxes, fontdict=font)
-    ax.text(.5, 0.88, subtext[3], ha='center',transform=ax.transAxes, fontdict=font)
+    t = ax.text(.5, 0.84, "\n".join(subtext), ha='center',transform=ax.transAxes, fontdict=font)
+    t.set_bbox(dict(facecolor='white', alpha=0.7, edgecolor=None))
+
 
     ax.grid(alpha=.4)
     ax.axhline(1, linestyle="--", color='black')
@@ -155,7 +157,7 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
 generate_rt
 Generates hospitalization reproduction rate image
 """
-def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,9,1), end_date=pd.Timestamp.today(), showPeak=False):
+def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,9,1), end_date=pd.Timestamp.today(), showPeak=False, path=""):
     if(not regionString):
         regionString = region
     label=f"{regionString} Weekly Growth in Hospitalizations"
@@ -174,7 +176,7 @@ def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,9
     plot_rt(data[['date', 'pct_chg']], showPeak=showPeak)
     fig.autofmt_xdate()
     fig.suptitle(label, fontsize=24)
-    plt.savefig(f"images/rt/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
+    plt.savefig(f"{path}images/rt/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
     print(f"LOG: Plotted rt for {region}")
     plt.close(fig)
 
@@ -206,8 +208,8 @@ def get_table(data, name="cases"):
         data.iloc[:,1] = data.avg
     maxDate = data['date'].max()
     recentNum = data[data.date == maxDate].iloc[:,1].item()
-    if "Test Positivity" in name:
-        recentNumFormat = round(recentNum,1)
+    if "Test Positivity" in name or "/" in name:
+        recentNumFormat = '{:,}'.format(round(recentNum, 1))
     else:
         recentNumFormat = '{:,}'.format(round(recentNum))
     lst = []
@@ -225,7 +227,7 @@ def get_table(data, name="cases"):
         else:
             newNum = math.nan
         if not math.isnan(newNum):
-            if "Test Positivity" in name:
+            if "Test Positivity" in name or "Million" in name:
                 numFormat = round(newNum,1)
             else:
                 numFormat = '{:,}'.format(round(newNum))
@@ -248,7 +250,7 @@ region: Region to plot. Regions defined in definitions.py
 start_date: Date to start plot
 end_date: Date to end plot
 """
-def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Timestamp.today()):
+def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Timestamp.today(), path=""):
     if region == "USA":
         pos = get_table(dp.get_us_positivity(start_date, end_date), name="Test Positivity")
         case = get_table(dp.get_us_cases(start_date, end_date), name="Cases")
@@ -256,9 +258,9 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
         hosp = get_table(dp.get_us_hospitalizations(start_date, end_date), name="In Hospital")
     else:
         pos = get_table(dp.get_state_positivity(definitions.regions[region], start_date, end_date), name="Test Positivity")
-        case = get_table(dp.get_state_cases(definitions.regions[region], start_date, end_date), name="Cases")
-        death = get_table(dp.get_state_deaths(definitions.regions[region], start_date, end_date), name="Deaths")
-        hosp = get_table(dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date), name="In Hospital")
+        case = get_table(dp.get_state_cases(definitions.regions[region], start_date, end_date), name="Cases/Million")
+        death = get_table(dp.get_state_deaths(definitions.regions[region], start_date, end_date), name="Deaths/Million")
+        hosp = get_table(dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date), name="In Hospital/Million")
 
     fig, axs = plt.subplots(2,2, dpi=300, figsize=[6.4,3.6], subplot_kw={'fc':'white'})
     plt.subplots_adjust(wspace=0.05, hspace=0, bottom=0)
@@ -267,17 +269,45 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
     plot_table(death, axs[1][0], plot_color=("xkcd:steel grey", "xkcd:light grey"))
     plot_table(hosp, axs[1][1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
     fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n All Numbers are 7-day Rolling Averages", fontweight="bold")
-    plt.savefig(f"images/tables/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
+    plt.savefig(f"{path}images/tables/{region}.png", bbox_inches='tight', pad_inches=.1, facecolor='white')
     print(f"LOG: Plotted tables for {region}")
     plt.close(fig)
+
+def generate_maps(path=""):
+    state_rt = dp.get_all_state_rt()
+    state_hosps = dp.get_all_state_hosps()
+    hosp_fig = px.choropleth(state_hosps, locations='State', locationmode="USA-states", color="Hospitalizations per Million", scope="usa", color_continuous_scale='YlOrRd')
+    hosp_fig.update_layout(
+        title={
+            'text': "USA Hospitalizations per Million",
+            'y':0.9,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'},
+        coloraxis_colorbar_title="")
+        
+    rt_fig = px.choropleth(state_rt, locations='State', locationmode="USA-states", color="Rt", scope="usa", color_continuous_scale='YlOrRd')
+    rt_fig.update_layout(
+        title={
+            'text': "USA Weekly Growth in Hospitalizations",
+            'y':0.9,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'},
+        coloraxis_colorbar_title="Rt")
+    pio.kaleido.scope.default_scale = 10
+    rt_fig.write_image(f"{path}images/maps/rt.png")
+    hosp_fig.write_image(f"{path}images/maps/hosp.png")
+    print(f"LOG: Plotted maps")
 
 """
 generate
 generates all tables and graphs to post
  regions: List of regions (defined in definitions.regions)
 """
-def generate(regions = definitions.regions.keys()):
+def generate(regions = definitions.regions.keys(), path=""):
+    generate_maps()
     for region in regions:
-        plot_tables(region=region)
-        plot_graphs(region=region)
-        generate_rt(region=region, showPeak=True)
+        plot_tables(region=region, path=path)
+        plot_graphs(region=region, path=path)
+        generate_rt(region=region, showPeak=True, path=path)
