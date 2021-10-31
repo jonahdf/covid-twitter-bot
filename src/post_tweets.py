@@ -31,21 +31,16 @@ def post():
 
     # Posts tweets in all defined regions, with current images 
     regions_to_post = definitions.regions.keys()
-    lastTweet = api.update_status(f"#COVID19 Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS: Hospitalizations and tests\nNYT: Cases and deaths") 
+    media1 = api.media_upload(f"./images/maps/hosp.png")
+    media2 = api.media_upload(f"./images/maps/rt.png")
+    lastTweet = api.update_status(f"#COVID19 Daily Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS: Hospitalizations and tests\nNYT: Cases and deaths", media_ids=[media1.media_id, media2.media_id]) 
     for region in regions_to_post:
         media1 = api.media_upload(f"./images/graphs/{region}.png")
         media2 = api.media_upload(f"./images/tables/{region}.png")
         media3 = api.media_upload(f"./images/rt/{region}.png")
-        media_ids = [media1.media_id, media2.media_id, media3.media_id]
-        if region == "USA":
-            media4 = api.media_upload(f"./images/maps/hosp.png")
-            media_ids.append(media4.media_id)
-            media5 = api.media_upload(f"./images/maps/rt.png")
-            media_ids.append(media5.media_id)
-
         if len(definitions.regions[region]) > 1 and region != "USA":
             regionString = region + " (" + ", ".join(definitions.regions[region]) + ")"
         else:
             regionString = region
-        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media_ids])
+        lastTweet = api.update_status(f"{regionString}", in_reply_to_status_id=lastTweet.id, auto_populate_reply_metadata=True,media_ids=[media1.media_id, media2.media_id, media3.media_id])
         print(f"posted tweet: {regionString}")
