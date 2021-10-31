@@ -1,6 +1,6 @@
 # covid-twitter-bot
 Gets NYT/HHS COVID data, creates visualizations, and posts daily to Twitter [@jonahfleish](https://twitter.com/jonahfleish)
-![image](https://pbs.twimg.com/media/E7wWvw-WEAUArNE?format=jpg&name=4096x4096)
+![image](https://raw.githubusercontent.com/jonahdf/covid-twitter-bot/main/images/graphs/USA.png)
 
 # Dependencies
 Python >= 3.8
@@ -25,5 +25,6 @@ Dependencies are listed in `requirements.txt`. Install with `pip install -r requ
 - If you are interested in contributing, shoot me an email (jonah.fleishhacker@gmail.com)
 
 # Visualization Samples
-![image](https://pbs.twimg.com/media/E7wWwDLWEAAZ8Vr?format=jpg&name=large)
-![image](https://pbs.twimg.com/media/E7_oMr3WEAU7ux2?format=jpg&name=large)
+![image](https://raw.githubusercontent.com/jonahdf/covid-twitter-bot/main/images/tables/USA.png)
+![image](https://raw.githubusercontent.com/jonahdf/covid-twitter-bot/main/images/rt/USA.png)
+![image](https://raw.githubusercontent.com/jonahdf/covid-twitter-bot/main/images/maps/rt.png)
