@@ -74,11 +74,17 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Tim
         l2, l3, l4 = "Cases", "In Hospital", "Deaths"
 
     else:
+        if region in ["California", "Texas", "Florida"]:
+            l2, l3, l4 = "Cases", "In Hospital", "Deaths"
+            normalize = False
+        else:
+            l2, l3, l4 = "Cases per Million", "In Hospital per Million", "Deaths per Million"
+            normalize = True
         pos = dp.get_state_positivity(definitions.regions[region], start_date, end_date)
-        case = dp.get_state_cases(definitions.regions[region], start_date, end_date)
-        death = dp.get_state_deaths(definitions.regions[region], start_date, end_date)
-        hosp = dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date)
-        l2, l3, l4 = "Cases per Million", "In Hospital per Million", "Deaths per Million"
+        case = dp.get_state_cases(definitions.regions[region], start_date, end_date, normalize=normalize)
+        death = dp.get_state_deaths(definitions.regions[region], start_date, end_date, normalize=normalize)
+        hosp = dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date, normalize=normalize)
+
 
 
     fig, axs = plt.subplots(2,2, figsize=(20,14))
@@ -290,7 +296,13 @@ def generate_maps(path=""):
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top'},
-        coloraxis_colorbar_title="")
+        coloraxis_colorbar_title="",
+        margin={
+            'l':0,
+            'r':0,
+            'b':0,
+            't':0
+        })
         
     rt_fig = px.choropleth(state_rt, 
                         locations='State', 
@@ -307,7 +319,13 @@ def generate_maps(path=""):
             'x':0.5,
             'xanchor': 'center',
             'yanchor': 'top'},
-        coloraxis_colorbar_title="Rt")
+        coloraxis_colorbar_title="Rt",
+        margin={
+            'l':0,
+            'r':0,
+            'b':0,
+            't':0
+        })
     pio.kaleido.scope.default_scale = 10
     rt_fig.write_image(f"{path}images/maps/rt.png")
     hosp_fig.write_image(f"{path}images/maps/hosp.png")

@@ -80,7 +80,7 @@ inputs:
 returns:
  df with 'date' and 'test_positivity'
 """
-def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today(), normalize=True):
     curr_date = start_date
     input_states = [definitions.states[s] for s in state_codes]
     state_data = nyt_data_state[nyt_data_state.state.isin(input_states)][:]
@@ -89,7 +89,10 @@ def get_state_cases(state_codes, start_date = pd.Timestamp(2020,1,1), end_date =
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        case_sum = day_data.cases.sum() / states_population * 1000000
+        if normalize:
+            case_sum = day_data.cases.sum() / states_population * 1000000
+        else:
+            case_sum = day_data.cases.sum()
         newRow = {'date': curr_date, 'cases': case_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
@@ -103,7 +106,7 @@ def get_us_cases(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.to
 get_state_deaths
 Same as above, deaths
 """
-def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today(), normalize=True):
     curr_date = start_date
     input_states = [definitions.states[s] for s in state_codes]
     state_data = nyt_data_state[nyt_data_state.state.isin(input_states)]
@@ -112,7 +115,10 @@ def get_state_deaths(state_codes, start_date = pd.Timestamp(2020,1,1), end_date 
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        case_sum = day_data.deaths.sum() / states_population * 1000000
+        if normalize:
+            case_sum = day_data.deaths.sum() / states_population * 1000000
+        else:
+            case_sum = day_data.deaths.sum()
         newRow = {'date': curr_date, 'deaths': case_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
@@ -126,7 +132,7 @@ def get_us_deaths(start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.t
 get_state_hospitalizations
 Same as above, hospitalizations
 """
-def get_state_hospitalizations(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today()):
+def get_state_hospitalizations(state_codes, start_date = pd.Timestamp(2020,1,1), end_date = pd.Timestamp.today(), normalize=True):
     curr_date = start_date
     state_data = hhs_data[hhs_data.state.isin(state_codes)]
     input_states = [definitions.states[s] for s in state_codes]
@@ -135,7 +141,10 @@ def get_state_hospitalizations(state_codes, start_date = pd.Timestamp(2020,1,1),
     lst = []
     while(curr_date <= end_date and curr_date <= max_date):
         day_data = state_data[state_data.date == str(curr_date)]
-        hosp_sum = day_data.inpatient_beds_used_covid.sum() / states_population * 1000000
+        if normalize:
+            hosp_sum = day_data.inpatient_beds_used_covid.sum() / states_population * 1000000
+        else:
+            hosp_sum = day_data.inpatient_beds_used_covid.sum()
         newRow = {'date': curr_date, 'hospitalizations': hosp_sum}
         lst.append(newRow)
         curr_date += datetime.timedelta(1)
