@@ -114,12 +114,13 @@ regions = {
     "California" : ["CA"],
     "Texas" : ["TX"],
     "Florida" : ["FL"],
+    "New York" : ["NY"],
     "Southeast" : ["AL", "AR", "GA", "KY", "LA", "MS", "NC", "SC", "TN"],
     "Southwest" : ["AZ", "NM", "NV", "OK", "UT"],
     "Pacific Northwest & Rockies" : ["CO", "ID", "MT", "OR", "WA", "WY", "AK"],
     "Great Plains": ["IA", "KS", "MN", "MO", "ND", "NE", "SD"],
     "Great Lakes": ["IL", "IN", "MI", "OH", "WI"],
     "Mid-Atlantic": ["DC", "DE", "MD", "PA", "VA", "WV"],
-    "Northeast": ["CT", "MA", "ME", "NH", "NJ", "NY", "RI", "VT"],
+    "Northeast": ["CT", "MA", "ME", "NH", "NJ", "RI", "VT"],
     "Hawaii and Puerto Rico": ["HI", "PR"]
 }
