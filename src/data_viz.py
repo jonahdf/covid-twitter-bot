@@ -74,7 +74,7 @@ def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Tim
         l2, l3, l4 = "Cases", "In Hospital", "Deaths"
 
     else:
-        if region in ["California", "Texas", "Florida"]:
+        if region in ["California", "Texas", "Florida", "New York"]:
             l2, l3, l4 = "Cases", "In Hospital", "Deaths"
             normalize = False
         else:
