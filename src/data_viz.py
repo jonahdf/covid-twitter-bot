@@ -337,7 +337,7 @@ generates all tables and graphs to post
  regions: List of regions (defined in definitions.regions)
 """
 def generate(regions = definitions.regions.keys(), path=""):
-    generate_maps()
+    generate_maps(path=path)
     for region in regions:
         plot_tables(region=region, path=path)
         plot_graphs(region=region, path=path)

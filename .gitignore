@@ -5,3 +5,6 @@ main.ipynb
 src/.DS_Store
 images/.DS_Store
 src/populations.csv
+*.png
+*.png
+data/hospitalizations.csv

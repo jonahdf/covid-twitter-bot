@@ -63,6 +63,8 @@ def get_data():
     # Make date columns in proper format
     # hhs_data.date = hhs_data.date.apply(lambda x: x[:10])
     hhs_data.date= pd.to_datetime(hhs_data.date)
+    hhs_data.to_csv("../data/hospitalizations.csv")
+    print("LOG: Wrote HHS data to CSV")
     test_data.date = test_data.date.apply(lambda x: x[:10])
     test_data.date = pd.to_datetime(test_data.date)
     nyt_data_us.date = pd.to_datetime(nyt_data_us.date)
@@ -267,14 +269,18 @@ get_all_state_rt
 Constructs a table of the most recent rt for every State
 returns: dataframe with state, rt
 """
-def get_all_state_rt():
+def get_all_state_rt(avg=True):
     state_rt = pd.DataFrame(columns=['State', 'Rt'])
     for state in definitions.states.keys():
         data = get_state_hospitalizations(state_codes=[state], start_date=(pd.Timestamp.today() - pd.Timedelta(days=20)).date())
         if data.empty:
             rt = False
         else:
-            rt_all = 1 + data.iloc[:,1].pct_change(periods=7).rolling(7).mean()
-            rt = rt_all.mean()
+            rt= 1 + data.iloc[:,1].pct_change(periods=7)
+            if(avg):
+                y1 = rt.rolling(7).mean()
+                rt = y1.iloc[-1]
+            else:
+                rt = rt.iloc[-1]
             state_rt = state_rt.append({"State":state, "Rt": float(rt)}, ignore_index=True)
     return state_rt
