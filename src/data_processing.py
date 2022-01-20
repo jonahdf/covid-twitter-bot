@@ -63,7 +63,7 @@ def get_data():
     # Make date columns in proper format
     # hhs_data.date = hhs_data.date.apply(lambda x: x[:10])
     hhs_data.date= pd.to_datetime(hhs_data.date)
-    hhs_data.to_csv("../data/hospitalizations.csv")
+    # hhs_data.to_csv("../data/hospitalizations.csv")
     print("LOG: Wrote HHS data to CSV")
     test_data.date = test_data.date.apply(lambda x: x[:10])
     test_data.date = pd.to_datetime(test_data.date)
