@@ -30,10 +30,12 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
             y1 = data.iloc[:,1].rolling(7).mean()
         ax.plot(x, y0, alpha=.3, color=plot_color)
         ax.plot(x, y1, color=plot_color)
-        ax.fill_between(x, y1, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
+        if(not label == "Test Positivity"):
+            ax.fill_between(x, y1, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
     else:
         ax.plot(x, y0, color=plot_color)
-        ax.fill_between(x, y0, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
+        if(not label == "Test Positivity"):
+            ax.fill_between(x, y0, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
     ax.set_title(label, fontdict={'size': 20})
     subtext = []
     for i in [-1,-8]:
@@ -306,9 +308,9 @@ def generate_maps(path=""):
         
     rt_fig = px.choropleth(state_rt, 
                         locations='State', 
-                        locationmode="USA-states", 
-                        color="Rt", 
-                        scope="usa", 
+                        locationmode="USA-states",
+                        color="Rt",
+                        scope="usa",
                         color_continuous_scale='balance',
                         color_continuous_midpoint=1,
                         range_color=(.7,1.3))
@@ -338,7 +340,8 @@ generates all tables and graphs to post
 """
 def generate(regions = definitions.regions.keys(), path=""):
     generate_maps(path=path)
+    start_date = pd.Timestamp(2020,4,1)
     for region in regions:
         plot_tables(region=region, path=path)
-        plot_graphs(region=region, path=path)
+        plot_graphs(start_date=start_date, region=region, path=path)
         generate_rt(region=region, showPeak=True, path=path)

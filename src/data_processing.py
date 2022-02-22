@@ -37,7 +37,7 @@ def get_data():
     # For provisional data, gets days since most recent update of HHS time series
     max_date = hhs_data.date.max()
     max_hosp_date = max_date
-    provisional = client.get("4cnb-m4rz", limit=2000000, where=f"update_date > '{max_date}'")
+    provisional = client.get("4cnb-m4rz", limit=2000000, where=("update_date > '" + max_date +"'"))
     hhs_provisional = pd.DataFrame.from_records(provisional)[['update_date', 'archive_link']]
     hhs_provisional.update_date = hhs_provisional.update_date.apply(lambda x: x[:10])
     hhs_provisional.update_date = pd.to_datetime(hhs_provisional.update_date)
@@ -63,14 +63,37 @@ def get_data():
     # Make date columns in proper format
     # hhs_data.date = hhs_data.date.apply(lambda x: x[:10])
     hhs_data.date= pd.to_datetime(hhs_data.date)
-    # hhs_data.to_csv("../data/hospitalizations.csv")
+    hhs_data.to_csv("data/hospitalizations.csv")
     print("LOG: Wrote HHS data to CSV")
-    test_data.date = test_data.date.apply(lambda x: x[:10])
+    # test_data.date = test_data.date.apply(lambda x: x[:10])
     test_data.date = pd.to_datetime(test_data.date)
+    test_data.to_csv("data/tests.csv")
+    print("LOG: Wrote test data to CSV")
     nyt_data_us.date = pd.to_datetime(nyt_data_us.date)
     nyt_data_state.date = pd.to_datetime(nyt_data_state.date)
+    nyt_data_us.to_csv("data/nyt_us.csv")
+    nyt_data_state.to_csv("data/nyt_state.csv")
+    print("LOG: Wrote NYT data to CSV")
     print("LOG: Done getting data")
 
+"""
+load_data
+Load data from CSV (to be run locally when testing)
+"""
+
+def load_data():
+    global nyt_data_us
+    global nyt_data_state
+    global test_data
+    global hhs_data
+    hhs_data = pd.read_csv("data/hospitalizations.csv")
+    hhs_data.date= pd.to_datetime(hhs_data.date)
+    test_data = pd.read_csv("data/tests.csv")
+    test_data.date = pd.to_datetime(test_data.date)
+    nyt_data_us= pd.read_csv("data/nyt_us.csv")
+    nyt_data_state= pd.read_csv("data/nyt_state.csv")
+    nyt_data_us.date = pd.to_datetime(nyt_data_us.date)
+    nyt_data_state.date = pd.to_datetime(nyt_data_state.date)
 
 """
 get_state_cases 
