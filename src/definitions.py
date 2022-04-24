@@ -122,5 +122,6 @@ regions = {
     "Great Lakes": ["IL", "IN", "MI", "OH", "WI"],
     "Mid-Atlantic": ["DC", "DE", "MD", "PA", "VA", "WV"],
     "Northeast": ["CT", "MA", "ME", "NH", "NJ", "RI", "VT"],
-    "Hawaii and Puerto Rico": ["HI", "PR"]
+    "Hawaii": ["HI"],
+    "Puerto Rico": ["PR"]
 }
