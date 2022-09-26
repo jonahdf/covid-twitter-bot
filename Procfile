@@ -1,1 +1,1 @@
-
+main: python ./main.py
