@@ -234,7 +234,7 @@ def get_table(data, name="cases"):
             newNum = newNum.item()
         else:
             newNum = math.nan
-        if not math.isnan(newNum):
+        if not (math.isnan(newNum) or newNum == 0):
             if "Test Positivity" in name or "Million" in name:
                 numFormat = round(newNum,1)
             else:
