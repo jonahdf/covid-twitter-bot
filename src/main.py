@@ -2,18 +2,18 @@ import data_processing
 import data_viz
 import post_tweets
 import sys
-import datetime
+from datetime import datetime, timezone, timedelta
 
 """
 run
  post = 
 runs all scripts to fetch, clean, visualize, and post data
 """
-
-
 def run(post=False, dev=False):
     # Workaround for Heroku Scheduler: Only run if it's a Sunday
-    if datetime.datetime.now().strftime("%A") != "Sunday" and not dev:
+    # Get current time in Pacific Time
+    pac_time = datetime.now(timezone(timedelta(hours=-7)))
+    if pac_time.weekday() != 6 and not dev:
         print("Not a Sunday. Won't post")
         exit()
     newestData = data_processing.DataSets(from_csv=dev)
