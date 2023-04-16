@@ -249,7 +249,7 @@ def get_table(data, name="cases", dateName = 'date', valColNum = 1, dateColNum =
         data.iloc[:,1] = data.avg
     maxDate = data[dateName].max()
     recentNum = data[data[dateName] == maxDate].iloc[:,valColNum].item()
-    if "Test Positivity" in name or "/" in name:
+    if "Test Positivity" in name or "/" in name and "Cases" not in name:
         recentNumFormat = '{:,}'.format(round(recentNum, 1))
     else:
         recentNumFormat = '{:,}'.format(round(recentNum))
@@ -262,7 +262,7 @@ def get_table(data, name="cases", dateName = 'date', valColNum = 1, dateColNum =
     if daily:
         RowsBackList = [("1 wk ago", -7), ("2 wks ago", -14), ("1 mo ago", -30), ("2 mo ago", -60), ("1 yr ago", -365), (f"Peak ({peakDateFormat})", peakRow)]
     else:
-        RowsBackList = [("1 wk ago", -1), ("2 wks ago", -2), ("1 mo ago", -4), ("2 mo ago", -8), ("1 yr ago", -52), (f"Peak ({peakDateFormat})", peakRow)]
+        RowsBackList = [("1 wk ago", -2), ("2 wks ago", -3), ("1 mo ago", -5), ("2 mo ago", -9), ("1 yr ago", -53), (f"Peak ({peakDateFormat})", peakRow)]
 
     for label, rowsBack in RowsBackList:
         newRow = data.iloc[rowsBack]
@@ -272,8 +272,8 @@ def get_table(data, name="cases", dateName = 'date', valColNum = 1, dateColNum =
         else:
             newVal = math.nan
         if not (math.isnan(newVal) or newVal == 0):
-            if "Test Positivity" in name or "Million" in name:
-                numFormat = round(newVal,1)
+            if "Test Positivity" in name or "Million" in name and "Cases" not in name:
+                numFormat = '{:,}'.format(round(newVal, 1))
             else:
                 numFormat = '{:,}'.format(round(newVal))
             change = round(-1 * (1 - (recentNum / newVal)) * 100, 1)
@@ -298,13 +298,13 @@ end_date: Date to end plot
 def plot_tables(datasets, region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Timestamp.today(), path=""):
     if region == "USA":
         pos = get_table(dp.get_us_positivity(datasets.test_data, start_date, end_date), name="Test Positivity")
-        case = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
-        death = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
-        hosp = get_table(dp.get_us_hospitalizations(datasets.hospitalization_data, start_date, end_date), name="In Hospital")
+        case = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date, colName='new_cases'), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        death = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date, colName='new_deaths'), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        hosp = get_table(dp.get_us_hospitalizations(datasets.hospitalization_data, start_date, end_date), name="In Hospital/Million")
     else:
         pos = get_table(dp.get_state_positivity(definitions.regions[region], datasets.test_data, start_date, end_date), name="Test Positivity")
-        case = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
-        death = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        case = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date, colName= 'new_cases'), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        death = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date, colName = 'new_deaths'), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
         hosp = get_table(dp.get_state_hospitalizations(definitions.regions[region], datasets.hospitalization_data, start_date, end_date), name="In Hospital/Million")
 
     fig, axs = plt.subplots(2,2, dpi=300, figsize=[6.4,3.6], subplot_kw={'fc':'white'})
@@ -380,5 +380,5 @@ def generate(data, regions = definitions.regions.keys(), path=""):
     start_date = pd.Timestamp(2020,4,1)
     for region in regions:
         plot_tables(data, region=region, path=path)
-        # plot_graphs(data, start_date=start_date, region=region, path=path)
-        # generate_rt(data, region=region, showPeak=False, path=path)
+        plot_graphs(data, start_date=start_date, region=region, path=path)
+        generate_rt(data, region=region, showPeak=False, path=path)
