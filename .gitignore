@@ -1,9 +1,11 @@
 .env
 *.pyc
 main.ipynb
-src/.DS_Store
-images/.DS_Store
 src/populations.csv
 *.png
 *.csv
 /twitenv/*
+*.DS_Store
+ctb/*
+images/*
+playground.ipynb
