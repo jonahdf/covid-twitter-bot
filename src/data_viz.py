@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 import datetime
 import matplotlib.dates as mdates
 import data_processing as dp
@@ -10,7 +12,7 @@ import plotly.express as px
 import kaleido
 
 """
-plot
+plot_daily
 Plots data with 7 day average
 
 data: dataframe time series with column 'date' and data in 1st column
@@ -18,7 +20,7 @@ plot_color: Color to use for plot
 label: string of plot label
 rolling: Boolean, True to overlay 7-day average
 """
-def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size':13, 'weight':'light'}):
+def plot_daily(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size':13, 'weight':'light'}):
     ax = ax or plt.gca()
     x, y0 = data.date, data.iloc[:,1]
     ax.margins(y=.12, x=.01)
@@ -36,7 +38,7 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
         ax.plot(x, y0, color=plot_color)
         if(not label == "Test Positivity"):
             ax.fill_between(x, y0, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
-    ax.set_title(label, fontdict={'size': 20})
+    ax.set_title(label, fontdict={'size': 20}, color='black')
     subtext = []
     for i in [-1,-8]:
         last_update_day = x.iloc[i].strftime('%b-%d')
@@ -50,13 +52,40 @@ def plot(data, ax=None, plot_color="blue", label="", rolling=True, font={ 'size'
             avg = int(round(y1.iloc[-1]))
         avg_formatted = '{:,}'.format(avg)
         subtext.append(f" 7-day Average: {avg_formatted}")
-    t = ax.text(.5, 0.88, "\n".join(subtext), ha='center',transform=ax.transAxes, fontdict=font)
-    t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor=None))
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
-    ax.grid(alpha=.4)
+    t = ax.text(.5, 0.88, "\n".join(subtext), ha='center',transform=ax.transAxes, fontdict=font, color='black')
+    t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='black'))
     ax.set_ylim(0, y1.max()*1.18)
     return ax
 
+
+"""
+plot_weekly
+Plots data for weekly datasets
+
+data: dataframe time series with column 'date' and data in 1st column
+plot_color: Color to use for plot
+label: string of plot label
+rolling: Boolean, True to overlay 7-day average
+"""
+def plot_weekly(data, ax=None, plot_color="blue", label="", font={ 'size':13, 'weight':'light'}):
+    ax = ax or plt.gca()
+    x, y0 = data.week_end_date, data.iloc[:,2]
+    ax.plot(x, y0, color=plot_color)
+    ax.fill_between(x, y0, 0, facecolor=plot_color, color=plot_color, alpha=0.2)
+    ax.set_title(label, fontdict={'size': 20}, color='black')
+    subtext = []
+    for i in [-1,-2]:
+        last_update_day = x.iloc[i].strftime('%b-%d')
+        last_val = round(y0.iloc[i], 1)
+        last_val_formatted = '{:,}'.format(last_val)
+        subtext.append(f" Week ending on {last_update_day}: {last_val_formatted}")
+    daily_avg = round((y0.iloc[i])/7, 1)
+    daily_avg_formatted = '{:,}'.format(daily_avg)
+    subtext.append(f" Daily average: {daily_avg_formatted}")
+    t = ax.text(.5, 0.88, "\n".join(subtext), ha='center',transform=ax.transAxes, fontdict=font, color='black')
+    t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='black'))
+    ax.set_ylim(0, y0.max()*1.18)
+    return ax
 
 """
 plot_graphs
@@ -67,39 +96,42 @@ region: Region to plot. Regions defined in definitions.py
 start_date: Date to start plot
 end_date: Date to end plot
 """
-def plot_graphs(region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Timestamp.today(), path=""):
+def plot_graphs(data, region="USA", start_date=pd.Timestamp(2020,4,1), end_date=pd.Timestamp.today(), path=""):
     if region == "USA":
-        pos = dp.get_us_positivity(start_date, end_date)
-        case = dp.get_us_cases(start_date, end_date)
-        death = dp.get_us_deaths(start_date, end_date)
-        hosp = dp.get_us_hospitalizations(start_date, end_date)
-        l2, l3, l4 = "Cases", "In Hospital", "Deaths"
+        pos = dp.get_us_positivity(data.test_data, start_date, end_date)
+        case = dp.get_all_state_data_weekly(data.cdc_data, start_date, end_date, normalize=True, colName='new_cases')
+        death = dp.get_all_state_data_weekly(data.cdc_data, start_date, end_date, normalize=True, colName='new_deaths')
+        hosp = dp.get_us_hospitalizations(data.hospitalization_data, start_date, end_date, normalize=True)
 
     else:
-        if region in ["California", "Texas", "Florida", "New York"]:
-            l2, l3, l4 = "Cases", "In Hospital", "Deaths"
-            normalize = False
-        else:
-            l2, l3, l4 = "Cases per Million", "In Hospital per Million", "Deaths per Million"
-            normalize = True
-        pos = dp.get_state_positivity(definitions.regions[region], start_date, end_date)
-        case = dp.get_state_cases(definitions.regions[region], start_date, end_date, normalize=normalize)
-        death = dp.get_state_deaths(definitions.regions[region], start_date, end_date, normalize=normalize)
-        hosp = dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date, normalize=normalize)
+        pos = dp.get_state_positivity(definitions.regions[region], data.test_data, start_date, end_date)
+        case = dp.get_state_data_weekly(definitions.regions[region], data.cdc_data, start_date, end_date, normalize=True, colName='new_cases')
+        death = dp.get_state_data_weekly(definitions.regions[region], data.cdc_data, start_date, end_date, normalize=True, colName='new_deaths')
+        hosp = dp.get_state_hospitalizations(definitions.regions[region], data.hospitalization_data, start_date, end_date, normalize=True)
 
 
 
     fig, axs = plt.subplots(2,2, figsize=(20,14))
-    plot(pos, axs[0][1], plot_color="purple", label=f"Test Positivity")
-    plot(case, axs[0][0], plot_color="red", label=l2)
-    plot(hosp, axs[1][1], plot_color="blue", label=l3)
-    plot(death, axs[1][0], plot_color="black", label=l4)
-    # fig.autofmt_xdate()
-    fig.patch.set_facecolor('white')
-    fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23)
+    plot_daily(pos, axs[0][1], plot_color="purple", label="Test Positivity")
+    plot_weekly(case, axs[0][0], plot_color="red", label="Weekly Cases per Million")
+    plot_daily(hosp, axs[1][1], plot_color="blue", label="In Hospital per Million")
+    plot_weekly(death, axs[1][0], plot_color="black", label="Weekly Deaths per Million")
+    for ax in axs.flatten():
+        ax.spines[:].set_linewidth(1)
+        ax.spines[:].set_color('black')
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b \'%y'))
+        ax.grid(alpha=.4)
+        ax.margins(y=.12, x=.01)
+        ax.grid(True, color='gray', zorder=1)
+        ax.set_facecolor('white')
+    
+    fig.set_facecolor('white')
+    fig.suptitle(f"{region} COVID Data {end_date.strftime('%m/%d/%y')}", fontweight="bold", fontsize=23, color='black')
     fig.tight_layout()
     plt.subplots_adjust(top=0.92)
-    plt.savefig(f"{path}images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1)
+    plt.draw()
+    
+    plt.savefig(f"{path}images/graphs/{region}.png", transparent=False, dpi=200, bbox_inches='tight', pad_inches=.1, facecolor=fig.get_facecolor())
     print(f"LOG: Plotted graphs for {region}")
     plt.close(fig)
 
@@ -165,22 +197,22 @@ def plot_rt(data, ax=None, plot_color="black", font={ 'size':13, 'weight':'light
 generate_rt
 Generates hospitalization reproduction rate image
 """
-def generate_rt(region="USA", regionString=False, start_date=pd.Timestamp(2020,9,1), end_date=pd.Timestamp.today(), showPeak=False, path=""):
+def generate_rt(datasets, region="USA", regionString=False, start_date=pd.Timestamp(2020,9,1), end_date=pd.Timestamp.today(), showPeak=False, path=""):
     if(not regionString):
         regionString = region
     label=f"{regionString} Weekly Growth in Hospitalizations"
     if(region == "USA"):
-        data = dp.get_us_hospitalizations(start_date=start_date, end_date=end_date)
+        data = dp.get_us_hospitalizations(dataset = datasets.hospitalization_data, start_date=start_date, end_date=end_date)
         data['pct_chg'] = 1 + data.iloc[:,1].pct_change(periods=7)
     else:
         if(isinstance(region, list)):
-            data= dp.get_state_hospitalizations(state_codes=region, start_date=start_date, end_date=end_date)
+            data= dp.get_state_hospitalizations(state_codes=region, dataset = datasets.hospitalization_data, start_date=start_date, end_date=end_date)
         else:
-            data = dp.get_state_hospitalizations(state_codes=definitions.regions[region], start_date=start_date, end_date=end_date)
+            data = dp.get_state_hospitalizations(state_codes=definitions.regions[region], dataset = datasets.hospitalization_data, start_date=start_date, end_date=end_date)
         # data['avg'] = data.iloc[:,1].rolling(7).mean() # For double smoothing
         data['pct_chg'] = 1 + data.iloc[:,1].pct_change(periods=7)
     
-    fig,ax = plt.subplots(dpi=100, figsize=(15,10))
+    fig,ax = plt.subplots(dpi=200, figsize=(15,10))
     plot_rt(data[['date', 'pct_chg']], showPeak=showPeak)
     fig.autofmt_xdate()
     fig.suptitle(label, fontsize=24)
@@ -210,12 +242,13 @@ Creates table as required in plot_table from dataframe
 data: Dataframe of 2 columns: Date and metric (cases, deaths, etc)
 name: Name for metric in table
 """
-def get_table(data, name="cases"):
-    data.iloc[:,1] = data.iloc[:,1].rolling(7).mean()
+def get_table(data, name="cases", dateName = 'date', valColNum = 1, dateColNum = 0, daily = True):
+    if "Hospital" in name:
+        data.iloc[:,valColNum] = data.iloc[:,valColNum].rolling(7).mean()
     if name == "Test Positivity":
         data.iloc[:,1] = data.avg
-    maxDate = data['date'].max()
-    recentNum = data[data.date == maxDate].iloc[:,1].item()
+    maxDate = data[dateName].max()
+    recentNum = data[data[dateName] == maxDate].iloc[:,valColNum].item()
     if "Test Positivity" in name or "/" in name:
         recentNumFormat = '{:,}'.format(round(recentNum, 1))
     else:
@@ -223,23 +256,27 @@ def get_table(data, name="cases"):
     lst = []
     newRow = {'Date': maxDate.strftime("%m/%d/%y"), name: recentNumFormat, 'Change': '-'}
     lst.append(newRow)
-    peakRow = data.iloc[:,1].idxmax()
-    peakDate = data.iloc[peakRow].iloc[0]
-    peakDaysBack = (peakDate - maxDate).days
+    peakRow = data.iloc[:,valColNum].idxmax()
+    peakDate = data.iloc[peakRow].iloc[dateColNum]
     peakDateFormat = peakDate.strftime("%m/%d/%y")
-    for label, daysBack in [("1 wk ago", -7), ("2 wks ago", -14), ("1 mo ago", -30), ("2 mo ago", -60), ("1 yr ago", -365), (f"Peak ({peakDateFormat})", peakDaysBack)]:
-        newDate = (maxDate + datetime.timedelta(daysBack))
-        newNum = data[data.date == newDate].iloc[:,1]
-        if(newNum.size == 1):
-            newNum = newNum.item()
+    if daily:
+        RowsBackList = [("1 wk ago", -7), ("2 wks ago", -14), ("1 mo ago", -30), ("2 mo ago", -60), ("1 yr ago", -365), (f"Peak ({peakDateFormat})", peakRow)]
+    else:
+        RowsBackList = [("1 wk ago", -1), ("2 wks ago", -2), ("1 mo ago", -4), ("2 mo ago", -8), ("1 yr ago", -52), (f"Peak ({peakDateFormat})", peakRow)]
+
+    for label, rowsBack in RowsBackList:
+        newRow = data.iloc[rowsBack]
+        newVal = newRow[valColNum]
+        if(newVal.size == 1):
+            newVal = newVal.item()
         else:
-            newNum = math.nan
-        if not (math.isnan(newNum) or newNum == 0):
+            newVal = math.nan
+        if not (math.isnan(newVal) or newVal == 0):
             if "Test Positivity" in name or "Million" in name:
-                numFormat = round(newNum,1)
+                numFormat = round(newVal,1)
             else:
-                numFormat = '{:,}'.format(round(newNum))
-            change = round(-1 * (1 - (recentNum / newNum)) * 100, 1)
+                numFormat = '{:,}'.format(round(newVal))
+            change = round(-1 * (1 - (recentNum / newVal)) * 100, 1)
         else:
             numFormat = "N/A"
             change = "N/A"
@@ -258,17 +295,17 @@ region: Region to plot. Regions defined in definitions.py
 start_date: Date to start plot
 end_date: Date to end plot
 """
-def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Timestamp.today(), path=""):
+def plot_tables(datasets, region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Timestamp.today(), path=""):
     if region == "USA":
-        pos = get_table(dp.get_us_positivity(start_date, end_date), name="Test Positivity")
-        case = get_table(dp.get_us_cases(start_date, end_date), name="Cases")
-        death = get_table(dp.get_us_deaths(start_date, end_date), name="Deaths")
-        hosp = get_table(dp.get_us_hospitalizations(start_date, end_date), name="In Hospital")
+        pos = get_table(dp.get_us_positivity(datasets.test_data, start_date, end_date), name="Test Positivity")
+        case = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        death = get_table(dp.get_all_state_data_weekly(datasets.cdc_data, start_date, end_date), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        hosp = get_table(dp.get_us_hospitalizations(datasets.hospitalization_data, start_date, end_date), name="In Hospital")
     else:
-        pos = get_table(dp.get_state_positivity(definitions.regions[region], start_date, end_date), name="Test Positivity")
-        case = get_table(dp.get_state_cases(definitions.regions[region], start_date, end_date), name="Cases/Million")
-        death = get_table(dp.get_state_deaths(definitions.regions[region], start_date, end_date), name="Deaths/Million")
-        hosp = get_table(dp.get_state_hospitalizations(definitions.regions[region], start_date, end_date), name="In Hospital/Million")
+        pos = get_table(dp.get_state_positivity(definitions.regions[region], datasets.test_data, start_date, end_date), name="Test Positivity")
+        case = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date), name="Weekly Cases/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        death = get_table(dp.get_state_data_weekly(definitions.regions[region], datasets.cdc_data, start_date, end_date), name="Weekly Deaths/Million", dateName='week_end_date', valColNum=2, dateColNum=1, daily = False)
+        hosp = get_table(dp.get_state_hospitalizations(definitions.regions[region], datasets.hospitalization_data, start_date, end_date), name="In Hospital/Million")
 
     fig, axs = plt.subplots(2,2, dpi=300, figsize=[6.4,3.6], subplot_kw={'fc':'white'})
     plt.subplots_adjust(wspace=0.05, hspace=0, bottom=0)
@@ -281,9 +318,9 @@ def plot_tables(region="USA", start_date=pd.Timestamp(2020,1,1), end_date=pd.Tim
     print(f"LOG: Plotted tables for {region}")
     plt.close(fig)
 
-def generate_maps(path=""):
-    state_rt = dp.get_all_state_rt()
-    state_hosps = dp.get_all_state_hosps()
+def generate_maps(data, path=""):
+    state_rt = dp.get_all_state_rt(dataset=data.hospitalization_data)
+    state_hosps = dp.get_all_state_hosps(dataset=data.hospitalization_data)
     hosp_fig = px.choropleth(state_hosps, 
                             locations='State', 
                             locationmode="USA-states", 
@@ -338,10 +375,10 @@ generate
 generates all tables and graphs to post
  regions: List of regions (defined in definitions.regions)
 """
-def generate(regions = definitions.regions.keys(), path=""):
-    generate_maps(path=path)
+def generate(data, regions = definitions.regions.keys(), path=""):
+    generate_maps(data, path=path)
     start_date = pd.Timestamp(2020,4,1)
     for region in regions:
-        plot_tables(region=region, path=path)
-        plot_graphs(start_date=start_date, region=region, path=path)
-        generate_rt(region=region, showPeak=True, path=path)
+        plot_tables(data, region=region, path=path)
+        # plot_graphs(data, start_date=start_date, region=region, path=path)
+        # generate_rt(data, region=region, showPeak=False, path=path)
