@@ -321,8 +321,8 @@ def get_all_state_rt(dataset, avg=True):
     for state in definitions.states.keys():
         data = get_state_hospitalizations(
             state_codes=[state],
+            dataset = dataset,
             start_date=(pd.Timestamp.today() - pd.Timedelta(days=20)).date(),
-            dataset=dataset,
         )
         if data.empty:
             rt = False
