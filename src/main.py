@@ -15,10 +15,10 @@ def run(post=False, dev=False):
     # Workaround for Heroku Scheduler: Only run if it's a Sunday
     # Get current time in Pacific Time
     pac_time = datetime.now(timezone(timedelta(hours=-7)))
-    # if pac_time.weekday() != 6 and not dev:
-    #     print("Not a Sunday. Won't post")
-    #     exit()
-    newestData = data_processing.DataSets(from_csv=True)
+    if pac_time.weekday() != 6 and not dev:
+        print("Not a Sunday. Won't post")
+        exit()
+    newestData = data_processing.DataSets(from_csv=dev)
     data_viz.generate(newestData)
     if post:
         post_tweets.post()
