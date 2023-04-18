@@ -1,7 +1,7 @@
 import pandas as pd
 from sodapy import Socrata
-import datetime
 import definitions
+from pathlib import Path
 
 
 class DataSets:
@@ -10,6 +10,7 @@ class DataSets:
         self.hospitalization_data = self.get_hosps(from_csv)
         self.test_data = self.get_tests(from_csv)
         if to_csv:
+            Path("./data").mkdir(parents=True, exist_ok=True)
             self.write_csv()
 
     def get_cdc(self, from_csv):
@@ -127,7 +128,7 @@ def get_state_hospitalizations(
     states_population = sum([definitions.populations[s] for s in input_states])
     lst = []
     while curr_date <= end_date and curr_date <= max_date:
-        day_data = state_data[state_data.date == str(curr_date)]
+        day_data = state_data[state_data.date == str(curr_date.date())]
         if normalize:
             hosp_sum = (
                 day_data.inpatient_beds_used_covid.sum() / states_population * 1000000
@@ -136,7 +137,7 @@ def get_state_hospitalizations(
             hosp_sum = day_data.inpatient_beds_used_covid.sum()
         newRow = {"date": curr_date, "hospitalizations": hosp_sum}
         lst.append(newRow)
-        curr_date += datetime.timedelta(1)
+        curr_date += pd.Timedelta(1, "day")
     return pd.DataFrame(lst)
 
 
@@ -156,7 +157,7 @@ def get_us_hospitalizations(
     max_date = dataset.date.max()
     lst = []
     while curr_date <= end_date and curr_date <= max_date:
-        day_data = dataset[dataset.date == str(curr_date)]
+        day_data = dataset[dataset.date == str(curr_date.date())]
         if normalize:
             hosp_sum = (
                 day_data.inpatient_beds_used_covid.sum()
@@ -167,7 +168,7 @@ def get_us_hospitalizations(
             hosp_sum = day_data.inpatient_beds_used_covid.sum()
         newRow = {"date": curr_date, "inpatient_beds_used_covid": hosp_sum}
         lst.append(newRow)
-        curr_date += datetime.timedelta(1)
+        curr_date += pd.Timedelta(1, "day")
     return pd.DataFrame(lst)
 
 
@@ -198,7 +199,7 @@ def get_state_positivity(
     while (
         curr_date <= end_date and curr_date <= max_date
     ):  # Loop through all unique dates
-        day_data = test_data_state[test_data_state.date == str(curr_date)]
+        day_data = test_data_state[test_data_state.date == str(curr_date.date())]
         test_pos = day_data[
             day_data.overall_outcome == "Positive"
         ].new_results_reported  # Get num positive tests
@@ -218,10 +219,10 @@ def get_state_positivity(
             "negative_tests": test_neg,
         }
         lst.append(newRow)
-        curr_date += datetime.timedelta(1)
+        curr_date += pd.Timedelta(1, "day")
 
     df = pd.DataFrame(lst)  # Create dataframe with all dates and test positivity
-    a = df.rolling(7).sum()
+    a = df[["positive_tests", "negative_tests"]].rolling(7).sum()
     df["avg"] = a.apply(
         lambda x: (100 * (x.positive_tests / (x.positive_tests + x.negative_tests)))
         if (x.positive_tests + x.negative_tests) > 0
@@ -249,7 +250,7 @@ def get_us_positivity(
     max_date = dataset.date.max()
     lst = []
     while curr_date <= end_date and curr_date <= max_date:
-        test_data_curr = dataset[dataset.date == str(curr_date)]
+        test_data_curr = dataset[dataset.date == str(curr_date.date())]
         test_pos = test_data_curr[
             test_data_curr.overall_outcome == "Positive"
         ].new_results_reported
@@ -268,10 +269,10 @@ def get_us_positivity(
             "negative_tests": neg_sum,
         }
         lst.append(newRow)
-        curr_date += datetime.timedelta(1)
+        curr_date += pd.Timedelta(1, "day")
     df = pd.DataFrame(lst)
     # Calculates 7-day averages of test positivity using sums over the window
-    a = df.rolling(7).sum()
+    a = df[["positive_tests", "negative_tests"]].rolling(7).sum()
     df["avg"] = a.apply(
         lambda x: (100 * (x.positive_tests / (x.positive_tests + x.negative_tests)))
         if (x.positive_tests + x.negative_tests) > 0
@@ -290,6 +291,7 @@ returns: dataframe with state, hosp per million
 
 def get_all_state_hosps(dataset):
     state_hosps = pd.DataFrame(columns=["State", "Hospitalizations"])
+    lst = []
     for state in definitions.states.keys():
         state_data = dataset[dataset.state.isin([state])]
         state_data = state_data[state_data["date"] <= pd.Timestamp.today()]
@@ -302,10 +304,9 @@ def get_all_state_hosps(dataset):
             hosps = (
                 hosps[0] / definitions.populations[definitions.states[state]] * 1000000
             )
-            state_hosps = state_hosps.append(
-                {"State": state, "Hospitalizations per Million": float(hosps)},
-                ignore_index=True,
-            )
+            newRow = {"State": state, "Hospitalizations per Million": float(hosps)}
+            lst.append(newRow)
+    state_hosps = pd.DataFrame(lst)
     return state_hosps
 
 
@@ -318,11 +319,12 @@ returns: dataframe with state, rt
 
 def get_all_state_rt(dataset, avg=True):
     state_rt = pd.DataFrame(columns=["State", "Rt"])
+    lst = []
     for state in definitions.states.keys():
         data = get_state_hospitalizations(
             state_codes=[state],
-            dataset = dataset,
-            start_date=(pd.Timestamp.today() - pd.Timedelta(days=20)).date(),
+            dataset=dataset,
+            start_date=(pd.Timestamp.today() - pd.Timedelta(20, "day")),
         )
         if data.empty:
             rt = False
@@ -333,9 +335,9 @@ def get_all_state_rt(dataset, avg=True):
                 rt = y1.iloc[-1]
             else:
                 rt = rt.iloc[-1]
-            state_rt = state_rt.append(
-                {"State": state, "Rt": float(rt)}, ignore_index=True
-            )
+            newRow = {"State": state, "Rt": float(rt)}
+            lst.append(newRow)
+    state_rt = pd.DataFrame(lst)
     return state_rt
 
 
@@ -370,7 +372,7 @@ def get_state_data_weekly(
     lst = []
     while curr_date <= end_date and curr_date <= max_date:
         if not (curr_date in state_data["end_date"].values):
-            curr_date += datetime.timedelta(1)
+            curr_date += pd.Timedelta(1, "day")
             continue
         week_data = state_data[state_data.end_date == curr_date]
         if normalize:
@@ -378,12 +380,12 @@ def get_state_data_weekly(
         else:
             data_sum = week_data[colName].sum()
         newRow = {
-            "week_start_date": curr_date - datetime.timedelta(6),
+            "week_start_date": curr_date - pd.Timedelta(6, "day"),
             "week_end_date": curr_date,
             colName: data_sum,
         }
         lst.append(newRow)
-        curr_date += datetime.timedelta(1)
+        curr_date += pd.Timedelta(1, "day")
     return pd.DataFrame(lst)
 
 

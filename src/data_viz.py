@@ -1,9 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
+from pathlib import Path
 
 matplotlib.use("Agg")
-import datetime
 import matplotlib.dates as mdates
 import data_processing as dp
 import definitions
@@ -551,7 +551,7 @@ def plot_tables(
     plot_table(death, axs[1][0], plot_color=("xkcd:steel grey", "xkcd:light grey"))
     plot_table(hosp, axs[1][1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
     fig.suptitle(
-        f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n All Numbers are 7-day Rolling Averages",
+        f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n Cases and deaths are weekly totals",
         fontweight="bold",
     )
     plt.savefig(
@@ -623,6 +623,11 @@ generates all tables and graphs to post
 
 
 def generate(data, regions=definitions.regions.keys(), path=""):
+    Path("./images/maps").mkdir(parents=True, exist_ok=True)
+    Path("./images/tables").mkdir(parents=True, exist_ok=True)
+    Path("./images/graphs").mkdir(parents=True, exist_ok=True)
+    Path("./images/rt").mkdir(parents=True, exist_ok=True)
+
     generate_maps(data, path=path)
     start_date = pd.Timestamp(2020, 4, 1)
     for region in regions:
