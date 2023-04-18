@@ -18,7 +18,7 @@ def run(post=False, dev=False):
     if pac_time.weekday() != 6 and not dev:
         print("Not a Sunday. Won't post")
         exit()
-    newestData = data_processing.DataSets(from_csv=dev)
+    newestData = data_processing.DataSets()
     data_viz.generate(newestData)
     if post:
         post_tweets.post()
