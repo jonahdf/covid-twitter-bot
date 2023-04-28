@@ -32,13 +32,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         a = sys.argv[1:]
         print(a)
-    if "-t" in a:
-        shouldTweet = True
-    if "-fc" in a:
-        shouldFromCSV = True
-    if "-tc" in a:
-        shouldToCSV = True
-    if "-d" in a:
-        dev = True
+        if "-t" in a:
+            shouldTweet = True
+        if "-fc" in a:
+            shouldFromCSV = True
+        if "-tc" in a:
+            shouldToCSV = True
+        if "-d" in a:
+            dev = True
 
     run(post=shouldTweet, to_csv=shouldToCSV, from_csv=shouldFromCSV, dev=dev)

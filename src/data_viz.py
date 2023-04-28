@@ -620,8 +620,6 @@ generate
 generates all tables and graphs to post
  regions: List of regions (defined in definitions.regions)
 """
-
-
 def generate(data, regions=definitions.regions.keys(), path=""):
     Path("./images/maps").mkdir(parents=True, exist_ok=True)
     Path("./images/tables").mkdir(parents=True, exist_ok=True)

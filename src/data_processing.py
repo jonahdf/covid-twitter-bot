@@ -2,8 +2,6 @@ import pandas as pd
 from sodapy import Socrata
 import definitions
 from pathlib import Path
-
-
 class DataSets:
     def __init__(self, to_csv=False, from_csv=False):
         self.cdc_data = self.get_cdc(from_csv)
@@ -41,12 +39,12 @@ class DataSets:
 
         # Get raw data
         client = Socrata("healthdata.gov", None)
-        hosp_results = client.get("g62h-syeh", limit=2000000)
+        hhs_data = pd.DataFrame(client.get("g62h-syeh", select="state, date, inpatient_beds_used_covid", limit=2000000))
 
         # Filter data to get columns of interest
-        hhs_data = pd.DataFrame.from_records(hosp_results)[
-            ["state", "date", "inpatient_beds_used_covid"]
-        ]
+        # hhs_data = pd.DataFrame.from_records(hosp_results)[
+        #     ["state", "date", "inpatient_beds_used_covid"]
+        # ]
         hhs_data.inpatient_beds_used_covid = hhs_data.inpatient_beds_used_covid.fillna(
             0
         )
@@ -54,12 +52,9 @@ class DataSets:
 
         # For provisional data, gets days since most recent update of HHS time series
         max_date = hhs_data.date.max()
-        provisional = client.get(
-            "4cnb-m4rz", limit=2000000, where=("update_date > '" + max_date + "'")
+        hhs_provisional = pd.DataFrame.from_records(client.get(
+            "4cnb-m4rz", select = "update_date, archive_link", limit=2000000, where=("update_date > '" + max_date + "'"))
         )
-        hhs_provisional = pd.DataFrame.from_records(provisional)[
-            ["update_date", "archive_link"]
-        ]
         hhs_provisional.update_date = hhs_provisional.update_date.apply(
             lambda x: x[:10]
         )
