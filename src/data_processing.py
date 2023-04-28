@@ -83,6 +83,7 @@ class DataSets:
         frames.append(hhs_data)
         hhs_data = pd.concat(frames)
         print("LOG: Added HHS Provisional data")
+        hhs_data.date = pd.to_datetime(hhs_data.date)
         return hhs_data
 
     def get_tests(self, from_csv):
@@ -98,6 +99,7 @@ class DataSets:
         ]
         test_data.new_results_reported = test_data.new_results_reported.fillna(0)
         test_data = test_data.astype({"new_results_reported": "int32"})
+        test_data.date = pd.to_datetime(test_data.date)
         return test_data
 
     def write_csv(self):

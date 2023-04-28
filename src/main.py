@@ -42,4 +42,3 @@ if __name__ == "__main__":
         dev = True
 
     run(post=shouldTweet, to_csv=shouldToCSV, from_csv=shouldFromCSV, dev=dev)
-
