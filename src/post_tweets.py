@@ -39,7 +39,7 @@ def post():
     media1 = api.media_upload(f"./images/maps/hosp.png")
     media2 = api.media_upload(f"./images/maps/rt.png")
     lastTweet = api.update_status(
-        f"#COVID19 Automatic Weekly Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSources:\nHHS: Hospitalizations and tests\nCDC: Cases and deaths",
+        f"#COVID19 Automatic Weekly Update - {datetime.date.today().strftime('%m/%d/%y')}\n\nSource:\nHHS: Hospitalizations and tests",
         media_ids=[media1.media_id, media2.media_id],
     )
     for region in regions_to_post:

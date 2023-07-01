@@ -138,12 +138,6 @@ def plot_graphs(
 ):
     if region == "USA":
         pos = dp.get_us_positivity(data.test_data, start_date, end_date)
-        case = dp.get_all_state_data_weekly(
-            data.cdc_data, start_date, end_date, normalize=True, colName="new_cases"
-        )
-        death = dp.get_all_state_data_weekly(
-            data.cdc_data, start_date, end_date, normalize=True, colName="new_deaths"
-        )
         hosp = dp.get_us_hospitalizations(
             data.hospitalization_data, start_date, end_date, normalize=True
         )
@@ -151,22 +145,6 @@ def plot_graphs(
     else:
         pos = dp.get_state_positivity(
             definitions.regions[region], data.test_data, start_date, end_date
-        )
-        case = dp.get_state_data_weekly(
-            definitions.regions[region],
-            data.cdc_data,
-            start_date,
-            end_date,
-            normalize=True,
-            colName="new_cases",
-        )
-        death = dp.get_state_data_weekly(
-            definitions.regions[region],
-            data.cdc_data,
-            start_date,
-            end_date,
-            normalize=True,
-            colName="new_deaths",
         )
         hosp = dp.get_state_hospitalizations(
             definitions.regions[region],
@@ -176,11 +154,9 @@ def plot_graphs(
             normalize=True,
         )
 
-    fig, axs = plt.subplots(2, 2, figsize=(20, 14))
-    plot_daily(pos, axs[0][1], plot_color="purple", label="Test Positivity")
-    plot_weekly(case, axs[0][0], plot_color="red", label="Weekly Cases per Million")
-    plot_daily(hosp, axs[1][1], plot_color="blue", label="In Hospital per Million")
-    plot_weekly(death, axs[1][0], plot_color="black", label="Weekly Deaths per Million")
+    fig, axs = plt.subplots(2, 1, figsize=(20, 14))
+    plot_daily(pos, axs[0], plot_color="purple", label="Test Positivity")
+    plot_daily(hosp, axs[1], plot_color="blue", label="In Hospital per Million")
     for ax in axs.flatten():
         ax.spines[:].set_linewidth(1)
         ax.spines[:].set_color("black")
@@ -373,6 +349,7 @@ def plot_table(data, ax=None, plot_color=("xkcd:light red", "xkcd:pale pink")):
         cellColours=[[plot_color[1]] * 3] * 7,
         colColours=[plot_color[0]] * 3,
     )
+    table.set_fontsize(8)
 
 
 """
@@ -471,26 +448,6 @@ def plot_tables(
             dp.get_us_positivity(datasets.test_data, start_date, end_date),
             name="Test Positivity",
         )
-        case = get_table(
-            dp.get_all_state_data_weekly(
-                datasets.cdc_data, start_date, end_date, colName="new_cases"
-            ),
-            name="Weekly Cases/Million",
-            dateName="week_end_date",
-            valColNum=2,
-            dateColNum=1,
-            daily=False,
-        )
-        death = get_table(
-            dp.get_all_state_data_weekly(
-                datasets.cdc_data, start_date, end_date, colName="new_deaths"
-            ),
-            name="Weekly Deaths/Million",
-            dateName="week_end_date",
-            valColNum=2,
-            dateColNum=1,
-            daily=False,
-        )
         hosp = get_table(
             dp.get_us_hospitalizations(
                 datasets.hospitalization_data, start_date, end_date
@@ -504,34 +461,6 @@ def plot_tables(
             ),
             name="Test Positivity",
         )
-        case = get_table(
-            dp.get_state_data_weekly(
-                definitions.regions[region],
-                datasets.cdc_data,
-                start_date,
-                end_date,
-                colName="new_cases",
-            ),
-            name="Weekly Cases/Million",
-            dateName="week_end_date",
-            valColNum=2,
-            dateColNum=1,
-            daily=False,
-        )
-        death = get_table(
-            dp.get_state_data_weekly(
-                definitions.regions[region],
-                datasets.cdc_data,
-                start_date,
-                end_date,
-                colName="new_deaths",
-            ),
-            name="Weekly Deaths/Million",
-            dateName="week_end_date",
-            valColNum=2,
-            dateColNum=1,
-            daily=False,
-        )
         hosp = get_table(
             dp.get_state_hospitalizations(
                 definitions.regions[region],
@@ -543,15 +472,13 @@ def plot_tables(
         )
 
     fig, axs = plt.subplots(
-        2, 2, dpi=300, figsize=[6.4, 3.6], subplot_kw={"fc": "white"}
+        2, 1, dpi=330, figsize=[6.4, 3.6], subplot_kw={"fc": "white"}
     )
     plt.subplots_adjust(wspace=0.05, hspace=0, bottom=0)
-    plot_table(case, axs[0][0], plot_color=("xkcd:light red", "xkcd:pale pink"))
-    plot_table(pos, axs[0][1], plot_color=("xkcd:purplish", "xkcd:light lavender"))
-    plot_table(death, axs[1][0], plot_color=("xkcd:steel grey", "xkcd:light grey"))
-    plot_table(hosp, axs[1][1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
+    plot_table(pos, axs[0], plot_color=("xkcd:purplish", "xkcd:light lavender"))
+    plot_table(hosp, axs[1], plot_color=("xkcd:sea blue", "xkcd:pale blue"))
     fig.suptitle(
-        f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n Cases and deaths are weekly totals",
+        f"{region} COVID Data {end_date.strftime('%m/%d/%y')}\n",
         fontweight="bold",
     )
     plt.savefig(
